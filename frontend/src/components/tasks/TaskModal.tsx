@@ -1,12 +1,13 @@
 import { Task, User } from '../../types'
 import { useState, useEffect } from 'react'
+import { Loader } from 'lucide-react'
 
 interface TaskModalProps {
   task: Task | null
   isOpen: boolean
   onClose: () => void
-  onSave?: (task: Task) => void
-  onDelete?: (taskId: string) => void
+  onSave?: (task: Task) => Promise<void>
+  onDelete?: (taskId: string) => Promise<void>
   users?: User[]
   isEditing?: boolean
   setIsEditing?: (isEditing: boolean) => void
@@ -24,11 +25,17 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<Task | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   // Sync form data when task changes
   useEffect(() => {
     if (task) {
       setFormData({ ...task })
+      setSaveError(null)
+      setDeleteError(null)
     }
   }, [task, isOpen])
 
@@ -39,31 +46,55 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const handleClose = () => {
     setShowDeleteConfirm(false)
     if (setIsEditing) setIsEditing(false)
+    setSaveError(null)
+    setDeleteError(null)
     onClose()
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target
     setFormData((prev) => (prev ? { ...prev, [name]: value } : null))
+    setSaveError(null)
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (formData && onSave) {
-      onSave(formData)
-      if (setIsEditing) setIsEditing(false)
-      handleClose()
+      setIsSaving(true)
+      setSaveError(null)
+      try {
+        await onSave(formData)
+        if (setIsEditing) setIsEditing(false)
+        handleClose()
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to save task'
+        setSaveError(errorMessage)
+      } finally {
+        setIsSaving(false)
+      }
     }
   }
 
   const handleDeleteClick = () => {
     setShowDeleteConfirm(true)
+    setDeleteError(null)
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (onDelete) {
-      onDelete(task.id)
-      setShowDeleteConfirm(false)
-      handleClose()
+      setIsDeleting(true)
+      setDeleteError(null)
+      try {
+        await onDelete(task.id)
+        setShowDeleteConfirm(false)
+        handleClose()
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to delete task'
+        setDeleteError(errorMessage)
+      } finally {
+        setIsDeleting(false)
+      }
     }
   }
 
@@ -101,22 +132,35 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   }
 
   const selectedAssignee = users.find((u) => u.id === formData.assignee)
+  const isProcessing = isSaving || isDeleting
 
   return (
     <>
       {/* Modal Overlay */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={handleClose} />
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 z-40"
+        onClick={handleClose}
+        aria-hidden="true"
+      />
 
       {/* Modal Content */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full my-8" onClick={(e) => e.stopPropagation()}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto" role="dialog">
+        <div
+          className="bg-white rounded-lg shadow-xl max-w-2xl w-full my-8"
+          onClick={(e) => e.stopPropagation()}
+          role="document"
+        >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900">{isEditing ? 'Edit Task' : 'Task Details'}</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {isEditing ? 'Edit Task' : 'Task Details'}
+            </h2>
             <button
               onClick={handleClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors text-2xl leading-none"
+              disabled={isProcessing}
+              className="text-gray-400 hover:text-gray-600 disabled:text-gray-300 transition-colors text-2xl leading-none disabled:cursor-not-allowed"
               title="Close"
+              aria-label="Close modal"
             >
               ✕
             </button>
@@ -124,16 +168,29 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
           {/* Content */}
           <div className="p-6 space-y-6">
+            {/* Save Error Alert */}
+            {saveError && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg" role="alert">
+                <p className="text-sm text-red-800 font-medium">Error</p>
+                <p className="text-sm text-red-700 mt-1">{saveError}</p>
+              </div>
+            )}
+
             {/* Title */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Title</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="task-title">
+                Title
+              </label>
               {isEditing ? (
                 <input
+                  id="task-title"
                   type="text"
                   name="title"
                   value={formData.title}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                  disabled={isProcessing}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
+                  data-testid="task-title-input"
                 />
               ) : (
                 <p className="text-gray-900 font-medium">{formData.title}</p>
@@ -142,18 +199,28 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+              <label
+                className="block text-sm font-semibold text-gray-700 mb-2"
+                htmlFor="task-description"
+              >
+                Description
+              </label>
               {isEditing ? (
                 <textarea
+                  id="task-description"
                   name="description"
                   value={formData.description || ''}
                   onChange={handleInputChange}
                   placeholder="Add a description..."
+                  disabled={isProcessing}
                   rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
+                  data-testid="task-description-input"
                 />
               ) : (
-                <p className="text-gray-600 whitespace-pre-wrap">{formData.description || 'No description'}</p>
+                <p className="text-gray-600 whitespace-pre-wrap">
+                  {formData.description || 'No description'}
+                </p>
               )}
             </div>
 
@@ -161,13 +228,18 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Status */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="task-status">
+                  Status
+                </label>
                 {isEditing ? (
                   <select
+                    id="task-status"
                     name="status"
                     value={formData.status}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    disabled={isProcessing}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
+                    data-testid="task-status-select"
                   >
                     <option value="todo">{statusLabels.todo}</option>
                     <option value="in-progress">{statusLabels['in-progress']}</option>
@@ -182,20 +254,29 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
               {/* Priority */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Priority</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="task-priority">
+                  Priority
+                </label>
                 {isEditing ? (
                   <select
+                    id="task-priority"
                     name="priority"
                     value={formData.priority}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    disabled={isProcessing}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
+                    data-testid="task-priority-select"
                   >
                     <option value="low">{priorityLabels.low}</option>
                     <option value="medium">{priorityLabels.medium}</option>
                     <option value="high">{priorityLabels.high}</option>
                   </select>
                 ) : (
-                  <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(formData.priority)}`}>
+                  <div
+                    className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(
+                      formData.priority
+                    )}`}
+                  >
                     {priorityLabels[formData.priority]}
                   </div>
                 )}
@@ -203,13 +284,18 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
               {/* Assignee */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Assignee</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="task-assignee">
+                  Assignee
+                </label>
                 {isEditing ? (
                   <select
+                    id="task-assignee"
                     name="assignee"
                     value={formData.assignee || ''}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    disabled={isProcessing}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
+                    data-testid="task-assignee-select"
                   >
                     <option value="">Unassigned</option>
                     {users.map((user) => (
@@ -254,8 +340,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
             <button
               onClick={handleDeleteClick}
-              className="px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors font-medium"
+              disabled={isProcessing}
+              className="px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 disabled:text-red-300 disabled:bg-transparent disabled:cursor-not-allowed rounded-lg transition-colors font-medium"
               title="Delete task"
+              data-testid="delete-task-btn"
             >
               Delete
             </button>
@@ -266,8 +354,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   onClick={() => {
                     if (setIsEditing) setIsEditing(false)
                     setFormData({ ...task })
+                    setSaveError(null)
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors font-medium"
+                  disabled={isProcessing}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors font-medium"
+                  data-testid="cancel-edit-btn"
                 >
                   Cancel
                 </button>
@@ -278,16 +369,21 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   onClick={() => {
                     if (setIsEditing) setIsEditing(true)
                   }}
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+                  disabled={isProcessing}
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed transition-colors font-medium"
+                  data-testid="edit-task-btn"
                 >
                   Edit
                 </button>
               ) : (
                 <button
                   onClick={handleSave}
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+                  disabled={isProcessing}
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
+                  data-testid="save-task-btn"
                 >
-                  Save
+                  {isSaving && <Loader className="h-4 w-4 animate-spin" />}
+                  {isSaving ? 'Saving...' : 'Save'}
                 </button>
               )}
             </div>
@@ -297,25 +393,37 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="dialog">
           <div className="bg-white rounded-lg shadow-lg max-w-sm w-full">
             <div className="p-6">
               <h2 className="text-lg font-bold text-gray-900 mb-4">Delete Task?</h2>
               <p className="text-gray-600 mb-6">
                 Are you sure you want to delete "{task.title}"? This action cannot be undone.
               </p>
+
+              {deleteError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md" role="alert">
+                  <p className="text-sm text-red-800">{deleteError}</p>
+                </div>
+              )}
+
               <div className="flex gap-3 justify-end">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+                  disabled={isDeleting}
+                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors font-medium"
+                  data-testid="delete-cancel-btn"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmDelete}
-                  className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors font-medium"
+                  disabled={isDeleting}
+                  className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
+                  data-testid="delete-confirm-btn"
                 >
-                  Delete
+                  {isDeleting && <Loader className="h-4 w-4 animate-spin" />}
+                  {isDeleting ? 'Deleting...' : 'Delete'}
                 </button>
               </div>
             </div>

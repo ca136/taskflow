@@ -7,12 +7,14 @@ interface AppLayoutProps {
   children: React.ReactNode
   breadcrumbs?: BreadcrumbItem[]
   title?: string
+  subtitle?: string
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
   children,
   breadcrumbs = [],
   title,
+  subtitle,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -20,42 +22,46 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     setIsMobileMenuOpen(isOpen)
   }
 
-  const handleSidebarClose = () => {
-    setIsMobileMenuOpen(false)
-  }
-
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* Header */}
+    <div className="flex flex-col h-screen bg-gray-50">
+      {/* Header with Navigation Bar */}
       <Header
         onMenuToggle={handleMenuToggle}
         isMobileMenuOpen={isMobileMenuOpen}
       />
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <Sidebar
-          isOpen={isMobileMenuOpen}
-          onClose={handleSidebarClose}
-        />
+      {/* Main Content with Sidebar */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* Responsive Sidebar */}
+        <Sidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-auto">
-          <div className="p-4 sm:p-6 lg:p-8">
-            {/* Page Title */}
-            {title && (
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
-                {title}
-              </h2>
-            )}
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto">
+          {/* Breadcrumbs and Page Header */}
+          <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+            <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
+              {/* Breadcrumbs */}
+              {breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} />}
 
-            {/* Breadcrumbs */}
-            {breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} />}
-
-            {/* Page Content */}
-            <div className="animate-fadeIn">
-              {children}
+              {/* Page Title and Subtitle */}
+              {title && (
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                    {title}
+                  </h1>
+                  {subtitle && (
+                    <p className="text-gray-600 text-sm sm:text-base mt-1">
+                      {subtitle}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
+          </div>
+
+          {/* Page Content */}
+          <div className="px-4 sm:px-6 lg:px-8 py-6">
+            {children}
           </div>
         </main>
       </div>
