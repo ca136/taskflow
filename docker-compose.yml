@@ -1,0 +1,94 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: taskflow_postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-taskflow_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-taskflow_password}
+      POSTGRES_DB: ${DB_NAME:-taskflow}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - taskflow_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskflow_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Backend FastAPI Application
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: taskflow_backend
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-taskflow_user}:${DB_PASSWORD:-taskflow_password}@postgres:5432/${DB_NAME:-taskflow}
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173,http://localhost,http://frontend:3000
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DEBUG: ${DEBUG:-true}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - taskflow_network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+
+  # Frontend React Application
+  frontend:
+    build:
+      context: frontend
+      dockerfile: ../frontend.Dockerfile
+    container_name: taskflow_frontend
+    environment:
+      VITE_API_URL: http://localhost:8000
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - taskflow_network
+    command: npm run dev
+    restart: unless-stopped
+
+  # Redis (Optional, for caching)
+  redis:
+    image: redis:7-alpine
+    container_name: taskflow_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - taskflow_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  taskflow_network:
+    driver: bridge
