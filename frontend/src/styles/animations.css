@@ -1,0 +1,96 @@
+/* Animation utilities reference
+   These work alongside the animations defined in index.css
+   Use with Tailwind's animate- classes or directly apply to elements
+*/
+
+/* Example usage:
+   - <div className="animate-fade-in">Content</div>
+   - <div className="animate-slide-in-up">Card</div>
+   - <div className="transition-all duration-normal hover:shadow-lg">Hoverable</div>
+*/
+
+/* Custom animation timings for different use cases */
+.animate-delay-100 {
+  animation-delay: 100ms;
+}
+
+.animate-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animate-delay-300 {
+  animation-delay: 300ms;
+}
+
+.animate-delay-500 {
+  animation-delay: 500ms;
+}
+
+/* Staggered animations for lists */
+.animate-stagger > * {
+  animation: slideInUp 250ms ease-in-out both;
+}
+
+.animate-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.animate-stagger > *:nth-child(2) {
+  animation-delay: 100ms;
+}
+
+.animate-stagger > *:nth-child(3) {
+  animation-delay: 200ms;
+}
+
+.animate-stagger > *:nth-child(4) {
+  animation-delay: 300ms;
+}
+
+.animate-stagger > *:nth-child(5) {
+  animation-delay: 400ms;
+}
+
+/* Loading skeleton shimmer animation */
+.skeleton {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Pulse for attention-grabbing */
+.pulse-attention {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Smooth transitions for all transition properties */
+.transition-smooth {
+  transition: all 250ms ease-in-out;
+}
+
+/* Fast transitions for interactions */
+.transition-fast {
+  transition: all 150ms ease-in-out;
+}
+
+/* Slow transitions for dramatic effect */
+.transition-slow {
+  transition: all 350ms ease-in-out;
+}
+
+/* Dragging state for kanban */
+.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+/* Drag over state */
+.drag-over {
+  background-color: rgba(14, 165, 233, 0.1);
+  border-color: rgb(14, 165, 233);
+}
+
+/* Bounce animation for buttons */
+.bounce-on-click:active {
+  animation: bounce 300ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
