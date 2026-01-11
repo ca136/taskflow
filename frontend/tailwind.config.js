@@ -14,6 +14,14 @@ export default {
           600: '#0284c7',
           700: '#0369a1',
         },
+        secondary: {
+          50: '#f8f9fa',
+          500: '#6b7280',
+          700: '#374151',
+        },
+      },
+      spacing: {
+        'safe': 'max(1rem, env(safe-area-inset-bottom))',
       },
     },
   },

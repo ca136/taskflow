@@ -1,1 +1,1 @@
-"""Core Configuration Package"""
+"""Core application modules."""

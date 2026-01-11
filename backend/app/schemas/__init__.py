@@ -1,1 +1,1 @@
-"""Pydantic Schemas Package"""
+"""Pydantic schemas."""
