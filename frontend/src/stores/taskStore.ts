@@ -6,7 +6,7 @@ import { Task, TaskFilter, TaskStatus } from '../types'
  * Task Store State Interface
  * Defines the shape of the task store state
  */
-interface TaskStoreState {
+export interface TaskStoreState {
   // State
   tasks: Task[]
   filter: TaskFilter
