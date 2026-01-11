@@ -57,11 +57,7 @@ export const ProjectList: React.FC = () => {
           action={{
             label: 'Create Project',
             onClick: () => {
-              toast.show({
-                type: 'info',
-                title: 'Create Project',
-                message: 'Project creation feature coming soon',
-              })
+              toast.info('Project creation feature coming soon')
             },
           }}
         />

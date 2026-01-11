@@ -63,7 +63,7 @@ export const useApiData = <T,>(
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<ApiError | null>(null)
   const [retryCount, setRetryCount] = useState(0)
-  const toastRef = useToast()
+  const toast = useToast()
   const retryTimeoutRef = useRef<NodeJS.Timeout>()
 
   const {
@@ -114,11 +114,7 @@ export const useApiData = <T,>(
         setRetryCount(0)
 
         if (showSuccess) {
-          toastRef.show({
-            type: 'success',
-            title: 'Success',
-            message: successMessage,
-          })
+          toast.success(successMessage)
         }
       } catch (err) {
         const apiError = err as ApiError
@@ -140,11 +136,7 @@ export const useApiData = <T,>(
 
         setError(apiError)
         if (showError) {
-          toastRef.show({
-            type: 'error',
-            title: 'Error',
-            message: errorMessage || apiError.message,
-          })
+          toast.error(errorMessage || apiError.message)
         }
       } finally {
         if (!isAutoRetry) {
@@ -152,17 +144,7 @@ export const useApiData = <T,>(
         }
       }
     },
-    [
-      url,
-      retryCount,
-      retryAttempts,
-      showError,
-      showSuccess,
-      successMessage,
-      errorMessage,
-      getRetryDelay,
-      toastRef,
-    ]
+    [url, retryCount, retryAttempts, showError, showSuccess, successMessage, errorMessage, getRetryDelay, toast]
   )
 
   // Initial fetch on mount or when URL changes
