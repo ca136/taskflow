@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { apiClient } from '../../services/apiClient'
 import { useAuthStore } from '../../stores/authStore'
-import { User, ApiResponse } from '../../types'
+import { User } from '../../types'
 
 /**
  * API request/response types for authentication
