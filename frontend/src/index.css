@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================================
+   GLOBAL RESET AND BASE STYLES
+   ========================================================================= */
+
 * {
   margin: 0;
   padding: 0;
@@ -11,13 +15,556 @@
 html,
 body {
   height: 100%;
+  width: 100%;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
+body {
+  @apply bg-white text-gray-900;
+  color-scheme: light;
+  line-height: 1.5;
+}
+
+body.dark {
+  @apply bg-gray-900 text-gray-50;
+  color-scheme: dark;
+}
+
+/* ============================================================================
+   ROOT AND MAIN CONTAINER
+   ========================================================================= */
+
 #root {
-  min-height: 100vh;
+  @apply min-h-screen flex flex-col;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================================================
+   TYPOGRAPHY
+   ========================================================================= */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @apply font-bold;
+  line-height: 1.2;
+  margin-bottom: 0.5em;
+}
+
+h1 {
+  @apply text-4xl md:text-5xl;
+  font-weight: 700;
+}
+
+h2 {
+  @apply text-3xl md:text-4xl;
+  font-weight: 700;
+}
+
+h3 {
+  @apply text-2xl md:text-3xl;
+  font-weight: 600;
+}
+
+h4 {
+  @apply text-xl md:text-2xl;
+  font-weight: 600;
+}
+
+h5 {
+  @apply text-lg md:text-xl;
+  font-weight: 600;
+}
+
+h6 {
+  @apply text-base md:text-lg;
+  font-weight: 600;
+}
+
+p {
+  margin-bottom: 1em;
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+a {
+  @apply text-primary-600 hover:text-primary-700 transition-colors duration-200;
+  text-decoration: none;
+}
+
+a:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary-500;
+}
+
+/* ============================================================================
+   FORM ELEMENTS
+   ========================================================================= */
+
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+}
+
+input,
+textarea,
+select {
+  @apply bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900;
+  @apply transition-colors duration-200;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  @apply outline-none border-primary-500;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+input::placeholder,
+textarea::placeholder {
+  @apply text-gray-500;
+}
+
+/* Dark mode form elements */
+body.dark input,
+body.dark textarea,
+body.dark select {
+  @apply bg-gray-800 border-gray-600 text-gray-50;
+}
+
+body.dark input:focus,
+body.dark textarea:focus,
+body.dark select:focus {
+  @apply border-primary-400;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+body.dark input::placeholder,
+body.dark textarea::placeholder {
+  @apply text-gray-400;
+}
+
+/* ============================================================================
+   BUTTONS
+   ========================================================================= */
+
+button,
+[role="button"] {
+  @apply cursor-pointer font-medium;
+  transition: all 0.2s ease-in-out;
+}
+
+button:focus-visible,
+[role="button"]:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary-500;
+}
+
+/* Primary button */
+.btn-primary {
+  @apply bg-primary-600 text-white px-4 py-2 rounded-lg font-medium;
+  @apply hover:bg-primary-700 active:bg-primary-800;
+  @apply disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* Secondary button */
+.btn-secondary {
+  @apply bg-gray-200 text-gray-900 px-4 py-2 rounded-lg font-medium;
+  @apply hover:bg-gray-300 active:bg-gray-400;
+  @apply disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* Ghost button */
+.btn-ghost {
+  @apply text-gray-700 px-4 py-2 rounded-lg font-medium;
+  @apply hover:bg-gray-100 active:bg-gray-200;
+  @apply disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* Danger button */
+.btn-danger {
+  @apply bg-red-600 text-white px-4 py-2 rounded-lg font-medium;
+  @apply hover:bg-red-700 active:bg-red-800;
+  @apply disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* Dark mode button variants */
+body.dark .btn-secondary {
+  @apply bg-gray-700 text-gray-100;
+  @apply hover:bg-gray-600 active:bg-gray-500;
+}
+
+body.dark .btn-ghost {
+  @apply text-gray-200;
+  @apply hover:bg-gray-800 active:bg-gray-700;
+}
+
+/* ============================================================================
+   CARDS AND CONTAINERS
+   ========================================================================= */
+
+.card {
+  @apply bg-white border border-gray-200 rounded-lg p-6;
+  @apply shadow-sm hover:shadow-md transition-shadow duration-200;
+}
+
+body.dark .card {
+  @apply bg-gray-800 border-gray-700;
+}
+
+.container-base {
+  @apply mx-auto px-4 sm:px-6 lg:px-8;
+  max-width: 1280px;
+}
+
+/* ============================================================================
+   BADGE AND LABEL STYLES
+   ========================================================================= */
+
+.badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+}
+
+.badge-primary {
+  @apply bg-primary-100 text-primary-700;
+}
+
+.badge-secondary {
+  @apply bg-gray-200 text-gray-700;
+}
+
+.badge-success {
+  @apply bg-success-100 text-success-700;
+}
+
+.badge-warning {
+  @apply bg-warning-100 text-warning-700;
+}
+
+.badge-danger {
+  @apply bg-danger-100 text-danger-700;
+}
+
+body.dark .badge-primary {
+  @apply bg-primary-900 text-primary-300;
+}
+
+body.dark .badge-secondary {
+  @apply bg-gray-700 text-gray-300;
+}
+
+body.dark .badge-success {
+  @apply bg-success-900 text-success-300;
+}
+
+body.dark .badge-warning {
+  @apply bg-warning-900 text-warning-300;
+}
+
+body.dark .badge-danger {
+  @apply bg-danger-900 text-danger-300;
+}
+
+/* ============================================================================
+   TASK STATUS BADGES - Custom theme for kanban statuses
+   ========================================================================= */
+
+/* Todo status - Blue */
+.task-status-todo {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  @apply bg-primary-100 text-primary-700;
+}
+
+body.dark .task-status-todo {
+  @apply bg-primary-900 text-primary-300;
+}
+
+/* In Progress status - Yellow/Amber */
+.task-status-in-progress {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  @apply bg-warning-100 text-warning-700;
+}
+
+body.dark .task-status-in-progress {
+  @apply bg-warning-900 text-warning-300;
+}
+
+/* Done status - Green */
+.task-status-done {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  @apply bg-success-100 text-success-700;
+}
+
+body.dark .task-status-done {
+  @apply bg-success-900 text-success-300;
+}
+
+/* ============================================================================
+   UTILITY CLASSES FOR COMMON PATTERNS
+   ========================================================================= */
+
+/* Flexbox utilities */
+.flex-center {
+  @apply flex items-center justify-center;
+}
+
+.flex-between {
+  @apply flex items-center justify-between;
+}
+
+.flex-col-center {
+  @apply flex flex-col items-center justify-center;
+}
+
+/* Grid utilities */
+.grid-auto {
+  @apply grid gap-4;
+}
+
+/* Text utilities */
+.text-truncate {
+  @apply truncate;
+}
+
+.text-clamp {
+  @apply line-clamp-3;
+}
+
+.text-muted {
+  @apply text-gray-600;
+}
+
+body.dark .text-muted {
+  @apply text-gray-400;
+}
+
+/* Visibility utilities */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Shadow utilities */
+.shadow-elevated {
+  @apply shadow-lg;
+}
+
+.shadow-hover {
+  @apply shadow-md transition-shadow duration-200;
+}
+
+.shadow-hover:hover {
+  @apply shadow-lg;
+}
+
+/* ============================================================================
+   SPACING STANDARDS
+   ========================================================================= */
+
+/* Consistent padding sets */
+.p-section {
+  @apply p-6 sm:p-8 lg:p-10;
+}
+
+.p-card {
+  @apply p-4 sm:p-6;
+}
+
+.p-compact {
+  @apply p-2 sm:p-3;
+}
+
+/* Consistent margin sets */
+.mb-section {
+  @apply mb-8 sm:mb-10 lg:mb-12;
+}
+
+/* ============================================================================
+   TRANSITIONS AND ANIMATIONS
+   ========================================================================= */
+
+/* Smooth transitions */
+.transition-smooth {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+.transition-fast {
+  @apply transition-all duration-150 ease-in-out;
+}
+
+.transition-slow {
+  @apply transition-all duration-500 ease-in-out;
+}
+
+/* Fade animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.animate-fade-out {
+  animation: fadeOut 0.3s ease-in-out;
+}
+
+.animate-slide-in-up {
+  animation: slideInUp 0.3s ease-in-out;
+}
+
+.animate-slide-in-down {
+  animation: slideInDown 0.3s ease-in-out;
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ========================================================================= */
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: more) {
+  body {
+    @apply text-gray-950;
+  }
+
+  a {
+    @apply underline;
+  }
+
+  .card {
+    @apply border-2 border-gray-900;
+  }
+}
+
+/* ============================================================================
+   RESPONSIVE UTILITIES
+   ========================================================================= */
+
+/* Show/hide based on breakpoint */
+@media (max-width: 640px) {
+  .hidden-mobile {
+    @apply hidden;
+  }
+}
+
+@media (min-width: 641px) {
+  .hidden-desktop {
+    @apply hidden;
+  }
+}
+
+/* ============================================================================
+   SCROLLBAR STYLING
+   ========================================================================= */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+body.dark ::-webkit-scrollbar-track {
+  @apply bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500;
+}
+
+body.dark ::-webkit-scrollbar-thumb {
+  @apply bg-gray-600;
+}
+
+body.dark ::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500;
+}
+
+/* ============================================================================
+   PRINT STYLES
+   ========================================================================= */
+
+@media print {
+  body {
+    @apply bg-white text-black;
+  }
+
+  a {
+    @apply text-black;
+  }
+
+  .no-print {
+    @apply hidden;
+  }
 }
