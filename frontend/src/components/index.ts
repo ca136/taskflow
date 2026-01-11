@@ -11,5 +11,7 @@ export { default as Header } from './Header'
 export { default as StatusFilter } from './StatusFilter'
 export type { StatusFilterProps, FilterStatus } from './StatusFilter'
 
+export { default as TaskCard } from './TaskCard'
+
 // Export task components
 export { default as TaskForm } from './tasks/TaskForm'
