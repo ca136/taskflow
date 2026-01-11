@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import { apiClient } from '../../services/apiClient'
 import { useAuthStore } from '../../stores/authStore'
 import { User, ApiResponse } from '../../types'
@@ -75,7 +76,7 @@ export function useLogin() {
       // Invalidate queries to refetch with new auth
       queryClient.invalidateQueries({ queryKey: authQueryKeys.currentUser() })
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       // Error handling is done by apiClient interceptors
       console.error('Login error:', error)
     },
@@ -116,7 +117,7 @@ export function useRegister() {
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: authQueryKeys.currentUser() })
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error('Registration error:', error)
     },
     onSettled: () => {
@@ -157,7 +158,7 @@ export function useLogout() {
       // Clear all auth-related queries
       queryClient.removeQueries({ queryKey: authQueryKeys.all })
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error('Logout error:', error)
       // Still clear local state even if logout endpoint fails
       logout()
@@ -178,7 +179,7 @@ export function useCurrentUser(enabled: boolean = true) {
   const { setUser, setLoading } = useAuthStore()
   const hasToken = !!localStorage.getItem('auth_token')
 
-  return useQuery({
+  const query = useQuery({
     queryKey: authQueryKeys.currentUser(),
     queryFn: async () => {
       const response = await apiClient.get<CurrentUserResponse>('/auth/me')
@@ -188,17 +189,26 @@ export function useCurrentUser(enabled: boolean = true) {
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
     retry: 1,
-    onSuccess: (user) => {
-      setUser(user)
+  })
+
+  // Handle success and error side effects
+  useEffect(() => {
+    if (query.data) {
+      setUser(query.data)
       setLoading(false)
-    },
-    onError: (error) => {
+    }
+  }, [query.data, setUser, setLoading])
+
+  useEffect(() => {
+    if (query.isError) {
       // Clear invalid token
       localStorage.removeItem('auth_token')
       setUser(null)
       setLoading(false)
-    },
-  })
+    }
+  }, [query.isError, setUser, setLoading])
+
+  return query
 }
 
 /**
@@ -218,17 +228,19 @@ export function useAuth() {
     isLoading,
     isAuthenticated: !!user,
 
-    // Operations
+    // Login
     login: login.mutate,
     loginAsync: login.mutateAsync,
     isLoggingIn: login.isPending,
     loginError: login.error,
 
+    // Register
     register: register.mutate,
     registerAsync: register.mutateAsync,
     isRegistering: register.isPending,
     registerError: register.error,
 
+    // Logout
     logout: logout.mutate,
     logoutAsync: logout.mutateAsync,
     isLoggingOut: logout.isPending,
