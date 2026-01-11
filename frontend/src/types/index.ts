@@ -1,3 +1,18 @@
+// Re-export all task types from task.ts
+export type {
+  Task,
+  TaskStatus,
+  TaskPriority,
+  TaskFormInput,
+  TaskFilter,
+  TaskCreatePayload,
+  TaskUpdatePayload,
+  TaskListResponse,
+  TaskWithComputedFields,
+  TaskBulkActionPayload,
+  TaskStatistics,
+} from './task'
+
 // User Types
 export interface User {
   id: string
@@ -24,19 +39,6 @@ export interface Board {
   name: string
   order: number
   createdAt: string
-}
-
-// Task Types
-export interface Task {
-  id: string
-  boardId: string
-  title: string
-  description?: string
-  assignee?: string
-  priority: 'low' | 'medium' | 'high'
-  status: 'todo' | 'in-progress' | 'done'
-  createdAt: string
-  updatedAt: string
 }
 
 // API Response Types
