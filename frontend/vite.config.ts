@@ -21,4 +21,11 @@ export default defineConfig({
     port: 5173,
     host: '0.0.0.0',
   },
+  // Environment variables configuration
+  // Expose only VITE_* prefixed environment variables to the client
+  define: {
+    'import.meta.env.VITE_API_URL': JSON.stringify(
+      process.env.VITE_API_URL || 'http://localhost:8000'
+    ),
+  },
 })

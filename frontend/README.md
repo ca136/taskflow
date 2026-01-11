@@ -50,6 +50,7 @@ src/
 ├── store/             # Zustand state stores
 ├── services/          # API client and utilities
 ├── types/             # TypeScript interfaces
+├── config/            # Configuration files
 ├── styles/            # Global styles
 ├── App.tsx            # Root component
 └── main.tsx           # Entry point
@@ -57,11 +58,40 @@ src/
 
 ## Environment Variables
 
-Create a `.env.local` file (see `.env.example`):
+### Setup
 
+1. Copy the example environment file:
+```bash
+cp .env.example .env.development
 ```
-VITE_API_URL=http://localhost:8000
-VITE_APP_NAME=TaskFlow
+
+2. Update variables as needed for your environment.
+
+### Available Variables
+
+- `VITE_API_URL` - Backend API URL (default: `http://localhost:8000`)
+
+### Environment Files
+
+- `.env.example` - Template with all available variables
+- `.env.development` - Development environment (auto-loaded by Vite)
+- `.env.production` - Production environment (optional, for production builds)
+
+### How Vite Loads Environment Files
+
+Vite automatically loads environment files based on the environment:
+- Development: `.env` + `.env.development`
+- Production: `.env` + `.env.production`
+
+Environment variables must be prefixed with `VITE_` to be exposed to client-side code.
+
+### Using Environment Variables in Code
+
+```typescript
+import config from '@/config/environment'
+
+// Access via config object
+const apiUrl = config.apiUrl
 ```
 
 ## Architecture

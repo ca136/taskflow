@@ -58,15 +58,50 @@ migrations/             # Alembic database migrations
 
 ## Environment Variables
 
-Create a `.env` file (see `.env.example`):
+### Setup
 
+1. Copy the example environment file:
+```bash
+cp .env.example .env
 ```
-DATABASE_URL=postgresql://user:password@localhost:5432/taskflow
-SECRET_KEY=your-secret-key-here
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
-ENVIRONMENT=development
+
+2. Update variables as needed for your environment.
+
+### Configuration Variables
+
+#### Database
+- `DATABASE_URL` - PostgreSQL connection string
+  - Format: `postgresql://username:password@host:port/database`
+  - Example: `postgresql://taskflow_user:taskflow_password@localhost:5432/taskflow`
+
+#### Security
+- `SECRET_KEY` - Secret key for JWT token signing (generate a strong random key for production)
+- `JWT_ALGORITHM` - Algorithm for JWT tokens (default: `HS256`)
+- `JWT_EXPIRATION_HOURS` - JWT token expiration time in hours (default: `24`)
+
+#### Development
+- `DEBUG` - Enable debug mode (default: `true`)
+- `LOG_LEVEL` - Logging level (default: `INFO`)
+- `ENVIRONMENT` - Environment name: `development`, `staging`, or `production`
+
+#### CORS
+- `CORS_ORIGINS` - Comma-separated list of allowed origins for CORS
+  - Example: `http://localhost:5173,http://localhost:3000`
+
+#### Server
+- `SERVER_HOST` - Host to bind to (default: `0.0.0.0`)
+- `SERVER_PORT` - Port to run on (default: `8000`)
+
+### Loading Environment Variables
+
+The backend uses Pydantic's `BaseSettings` to load environment variables from `.env` file:
+
+```python
+from app.core.config import settings
+
+# Access variables
+database_url = settings.DATABASE_URL
+secret_key = settings.SECRET_KEY
 ```
 
 ## API Documentation
