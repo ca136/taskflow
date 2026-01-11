@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Plus, RotateCcw } from 'lucide-react'
 import { useApiData } from '../../hooks/useApiData'
-import { LoadingSpinner, ErrorMessage, EmptyState } from '../common'
+import { LoadingState, ErrorDisplay, EmptyState } from '../common'
 
 export interface Task {
   id: string
@@ -47,23 +47,40 @@ const COLUMN_DEFINITIONS = [
 ]
 
 export const KanbanBoard = () => {
+  const [isRetrying, setIsRetrying] = useState(false)
   const { data: tasks, isLoading, error, retry } = useApiData<Task[]>('/api/tasks', {
     showError: true,
     errorMessage: 'Failed to load tasks. Please check your connection and try again.',
   })
 
-  if (isLoading) {
-    return <LoadingSpinner label="Loading your tasks..." />
+  const handleRetry = async () => {
+    setIsRetrying(true)
+    try {
+      await retry()
+    } finally {
+      setIsRetrying(false)
+    }
   }
 
-  if (error) {
+  // Loading state - show skeleton loaders
+  if (isLoading) {
     return (
       <div className="flex-1 bg-gray-50 p-4 md:p-6">
-        <ErrorMessage
+        <LoadingState type="skeleton" label="Loading your tasks..." count={3} />
+      </div>
+    )
+  }
+
+  // Error state - show enhanced error display
+  if (error) {
+    return (
+      <div className="flex-1 bg-gray-50 p-4 md:p-6 flex items-center justify-center">
+        <ErrorDisplay
+          error={error}
+          variant="card"
           title="Failed to Load Tasks"
-          message={error.message}
-          onRetry={retry}
-          onDismiss={() => {}}
+          onRetry={handleRetry}
+          isRetrying={isRetrying}
         />
       </div>
     )
@@ -99,17 +116,19 @@ export const KanbanBoard = () => {
   return (
     <div className="flex-1 overflow-x-auto bg-gray-50 p-4 md:p-6">
       {/* Header with task count and retry button */}
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
         <div className="text-sm text-gray-600">
           Total tasks: <span className="font-semibold text-gray-900">{totalTasks}</span>
         </div>
         <button
-          onClick={retry}
-          className="flex items-center gap-2 px-3 py-1 text-sm text-gray-600 hover:text-gray-900 bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
+          onClick={handleRetry}
+          disabled={isRetrying}
+          className="flex items-center gap-2 px-3 py-1 text-sm text-gray-600 hover:text-gray-900 bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="Refresh tasks"
+          aria-label="Refresh tasks"
         >
-          <RotateCcw className="h-4 w-4" />
-          <span className="hidden sm:inline">Refresh</span>
+          <RotateCcw className={`h-4 w-4 ${isRetrying ? 'animate-spin' : ''}`} />
+          <span className="hidden sm:inline">{isRetrying ? 'Refreshing...' : 'Refresh'}</span>
         </button>
       </div>
 
@@ -150,9 +169,7 @@ export const KanbanBoard = () => {
                     )}
                     <div className="flex flex-wrap items-center gap-2 mt-2">
                       {task.priority && (
-                        <span
-                          className={`text-xs px-2 py-1 rounded ${getPriorityColor(task.priority)}`}
-                        >
+                        <span className={`text-xs px-2 py-1 rounded ${getPriorityColor(task.priority)}`}>
                           {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
                         </span>
                       )}
@@ -170,6 +187,7 @@ export const KanbanBoard = () => {
               <button
                 className="w-full mt-2 py-2 px-3 rounded-md border-2 border-dashed border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-700 flex items-center justify-center gap-1 text-sm transition-colors"
                 data-testid={`add-task-${column.id}`}
+                aria-label={`Add task to ${column.title}`}
               >
                 <Plus size={16} />
                 <span className="hidden sm:inline">Add Task</span>

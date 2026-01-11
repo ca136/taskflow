@@ -1,3 +1,7 @@
+# ==========================================
+# Python
+# ==========================================
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -122,51 +126,234 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# IDE settings
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-
+# ==========================================
 # Node / Frontend
+# ==========================================
+
+# Dependencies
 node_modules/
-npm-debug.log
-npm-error.log
-yarn-error.log
+npm-debug.log*
+npm-error.log*
+yarn-debug.log*
+yarn-error.log*
 .npm
 .eslintcache
 
-# Vite
+# Production
 dist/
+build/
+
+# Vite
 .env.local
 .env.*.local
 
 # Build output
-build/
 .turbo/
 
-# OS specific
-Thumbs.db
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage/
+*.lcov
+
+# ==========================================
+# IDE & Editor
+# ==========================================
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyCharm / IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+*.swp
+*.swo
+*~
+.vim/
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# VS Code
+settings.json
+launch.json
+
+# ==========================================
+# OS Specific
+# ==========================================
+
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+*.swp
+.vscode/
+*.code-workspace
 
-# Local development
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
 
+# Linux
+.directory
+
+# ==========================================
+# Docker & Containers
+# ==========================================
+
+# Docker
+.docker/
+docker-compose.override.yml
+docker-compose.local.yml
+
+# ==========================================
 # Database
+# ==========================================
+
+# SQLite
 *.db
 *.sqlite
 *.sqlite3
 
+# PostgreSQL
+pg_stat_statements.out
+postmaster.pid
+
+# ==========================================
+# Secrets & Keys
+# ==========================================
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# AWS
+.aws/
+aws_credentials
+
+# SSH Keys
+*.pem
+*.pub
+id_rsa*
+
 # Secrets
 secrets.yaml
-.secrets
+secrets.json
+.secrets/
+private_keys/
 
-# Temp files
+# ==========================================
+# Temporary Files
+# ==========================================
+
+# General temp
 *.tmp
+*.temp
 tmp/
 temp/
+cache/
+
+# OS specific temp
+.AppleDouble
+.LSOverride
+._*
+.apdisk
+
+# ==========================================
+# Logs
+# ==========================================
+
+# Application logs
+*.log
+logs/
+*.err
+
+# Webpack
+webpack-stats.json
+
+# ==========================================
+# IDE Specific
+# ==========================================
+
+# Cursor
+.cursor/
+
+# GitHub Copilot
+.copilot/
+
+# ==========================================
+# Build & Test Output
+# ==========================================
+
+# Jest coverage
+coverage/
+.nyc_output/
+
+# Cypress
+cypress/screenshots/
+cypress/videos/
+
+# Python test outputs
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ==========================================
+# Package Manager Lock Files (if sharing)
+# Uncomment if you want to share lock files
+
+# /package-lock.json
+# /yarn.lock
+# /Pipfile.lock
+
+# ==========================================
+# Documentation Build Output
+# ==========================================
+
+/site/
+/docs/_build/
+dist/
+
+# ==========================================
+# Project Specific
+# ==========================================
+
+# Workspace
+workspace/
+
+# Old documentation files
+INITIALIZATION_*.md
+TASK_*.md
+PROJECT_*.md
+GOAL_*.md
+EXECUTION_*.md
+REPOSITORY_*.md
+FINAL_*.md
+COMPLETE_*.md
+SETUP_VERIFICATION.md
+MONOREPO_STRUCTURE_VERIFIED.md
+responsive-design-test-report.md
