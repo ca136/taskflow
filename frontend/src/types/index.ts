@@ -26,18 +26,15 @@ export interface Board {
   createdAt: string
 }
 
-// Task Types
-export interface Task {
-  id: string
-  boardId: string
-  title: string
-  description?: string
-  assignee?: string
-  priority: 'low' | 'medium' | 'high'
-  status: 'todo' | 'in-progress' | 'done'
-  createdAt: string
-  updatedAt: string
-}
+// Task Types - Re-export from dedicated task types file
+export {
+  Task,
+  TaskStatus,
+  CreateTaskRequest,
+  UpdateTaskRequest,
+  TaskWithBoard,
+  TaskStatusType,
+} from './task'
 
 // API Response Types
 export interface ApiResponse<T> {
