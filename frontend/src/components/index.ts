@@ -13,5 +13,8 @@ export type { StatusFilterProps, FilterStatus } from './StatusFilter'
 
 export { default as TaskCard } from './TaskCard'
 
+export { default as TaskList } from './TaskList'
+export type { TaskListProps } from './TaskList'
+
 // Export task components
 export { default as TaskForm } from './tasks/TaskForm'
