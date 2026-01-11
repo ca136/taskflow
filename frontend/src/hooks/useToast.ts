@@ -1,0 +1,25 @@
+import { useContext } from 'react'
+import { ToastContext } from '../components/Toast'
+
+export interface ToastMessage {
+  id: string
+  message: string
+  type: 'success' | 'error' | 'info' | 'warning'
+  duration?: number
+}
+
+export interface ToastContextType {
+  toasts: ToastMessage[]
+  showToast: (message: string, type?: 'success' | 'error' | 'info' | 'warning', duration?: number) => void
+  removeToast: (id: string) => void
+}
+
+export const useToast = () => {
+  const context = useContext(ToastContext)
+  
+  if (!context) {
+    throw new Error('useToast must be used within a ToastProvider')
+  }
+  
+  return context
+}
