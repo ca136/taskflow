@@ -1,29 +1,27 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@components': path.resolve(__dirname, './src/components'),
-      '@pages': path.resolve(__dirname, './src/pages'),
-      '@hooks': path.resolve(__dirname, './src/hooks'),
-      '@stores': path.resolve(__dirname, './src/stores'),
-      '@services': path.resolve(__dirname, './src/services'),
-      '@types': path.resolve(__dirname, './src/types'),
-      '@utils': path.resolve(__dirname, './src/utils'),
+      '@': '/src',
+      '@components': '/src/components',
+      '@pages': '/src/pages',
+      '@hooks': '/src/hooks',
+      '@stores': '/src/stores',
+      '@services': '/src/services',
+      '@types': '/src/types',
+      '@utils': '/src/utils',
     },
   },
   server: {
     port: 5173,
     host: '0.0.0.0',
   },
-  // Environment variables configuration
-  // Expose only VITE_* prefixed environment variables to the client
   define: {
+    // Ensure environment variables are properly injected at build time
     'import.meta.env.VITE_API_URL': JSON.stringify(
       process.env.VITE_API_URL || 'http://localhost:8000'
     ),
