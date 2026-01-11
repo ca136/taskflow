@@ -236,9 +236,9 @@ export function parseApiError(error: unknown): ParsedError {
 
   // Handle Axios errors with response
   if (isAxiosErrorWithResponse(error)) {
-    const { response, code } = error
-    const statusCode = response.status
-    const data = response.data
+    const response = error.response
+    const statusCode = response!.status
+    const data = response!.data
 
     // Determine error categories
     const { isNotFound, isAuthError, isServerError } = getErrorCategory(statusCode)
