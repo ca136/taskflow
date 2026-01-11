@@ -1,244 +1,491 @@
-# TaskFlow
+# TaskFlow 🚀
 
-A lightweight, full-stack kanban project management application designed for small teams.
+**TaskFlow** is a lightweight, full-stack kanban project management application designed for small teams. It enables intuitive task and project management with a focus on simplicity, efficiency, and a delightful user experience.
 
-## Overview
-
-TaskFlow is a modern project management tool that provides an intuitive kanban-style interface for managing tasks and projects. Built with a focus on simplicity and efficiency, it helps teams collaborate and stay organized.
-
-## Tech Stack
-
-### Frontend
-- **React 18+** - UI framework
-- **TypeScript** - Type-safe JavaScript
-- **Vite** - Fast build tool and dev server
-- **Tailwind CSS** - Utility-first CSS framework
-- **React Query** - Server state management
-- **Zustand** - Client state management
-- **React Router** - Client-side routing
-
-### Backend
-- **FastAPI** - Modern, fast Python web framework
-- **Python 3.11+** - Async/await support
-- **SQLAlchemy** - ORM for database
-- **Pydantic** - Data validation
-- **PostgreSQL** - Primary database
-- **Redis** - Caching (optional)
-
-## Project Structure
-
-```
-taskflow/
-├── frontend/                 # React + TypeScript application
-│   ├── public/              # Static assets
-│   ├── src/
-│   │   ├── components/      # Reusable UI components
-│   │   ├── pages/           # Page components
-│   │   ├── hooks/           # Custom React hooks
-│   │   ├── utils/           # Utility functions
-│   │   ├── api/             # API client and endpoints
-│   │   ├── types/           # TypeScript types
-│   │   ├── store/           # Zustand stores
-│   │   └── assets/          # Icons, images
-│   ├── package.json
-│   ├── vite.config.ts
-│   ├── tsconfig.json
-│   └── tailwind.config.js
-│
-├── backend/                 # FastAPI application
-│   ├── app/
-│   │   ├── routes/          # API route handlers
-│   │   ├── models/          # SQLAlchemy models
-│   │   ├── schemas/         # Pydantic schemas
-│   │   ├── core/            # Core configs, auth, dependencies
-│   │   ├── services/        # Business logic
-│   │   └── main.py          # FastAPI app entry point
-│   ├── tests/               # Test suite
-│   ├── scripts/             # Database migrations, seed scripts
-│   ├── requirements.txt
-│   ├── .env.example
-│   └── pyproject.toml
-│
-├── docs/                    # Documentation
-│   ├── API.md              # API reference
-│   ├── SETUP.md            # Setup instructions
-│   └── ARCHITECTURE.md     # System architecture
-│
-├── .gitignore
-├── README.md
-└── docker-compose.yml       # Optional: Local development setup
-
-```
-
-## Getting Started
-
-### Prerequisites
-- Node.js 18+ and npm 9+
-- Python 3.11+
-- PostgreSQL 12+ (for backend)
-
-### Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Run tests
-npm test
-
-# Lint code
-npm run lint
-```
-
-The frontend will be available at `http://localhost:5173`
-
-### Backend Setup
-
-```bash
-cd backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Set up environment variables
-cp .env.example .env
-
-# Run database migrations
-alembic upgrade head
-
-# Start development server
-uvicorn app.main:app --reload
-
-# Run tests
-pytest
-```
-
-The backend API will be available at `http://localhost:8000`
-
-### API Documentation
-
-Once the backend is running, visit `http://localhost:8000/docs` for interactive API documentation (Swagger UI).
-
-## Development Workflow
-
-1. Create a feature branch from `main`
-2. Implement changes in both frontend and/or backend as needed
-3. Test your changes locally
-4. Submit a pull request for code review
-5. After approval, merge to `main` and deploy
-
-## Environment Variables
-
-### Frontend
-Create `.env.local` in the frontend directory:
-```
-VITE_API_URL=http://localhost:8000/api
-```
-
-### Backend
-Create `.env` in the backend directory (see `.env.example`):
-```
-DATABASE_URL=postgresql://user:password@localhost/taskflow
-SECRET_KEY=your-secret-key-here
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-```
-
-## Documentation
-
-- **[Setup Guide](docs/SETUP.md)** - Detailed setup instructions for development
-- **[Architecture Guide](docs/ARCHITECTURE.md)** - System design and patterns
-- **[API Reference](docs/API.md)** - Complete API endpoint documentation
-
-## Database
-
-The application uses PostgreSQL as the primary database. Database migrations are managed using Alembic.
-
-```bash
-cd backend
-
-# Create a new migration
-alembic revision --autogenerate -m "Description of changes"
-
-# Apply migrations
-alembic upgrade head
-
-# Revert to previous migration
-alembic downgrade -1
-```
-
-## Testing
-
-### Frontend
-```bash
-cd frontend
-npm test
-npm run test:coverage
-```
-
-### Backend
-```bash
-cd backend
-pytest
-pytest --cov=app tests/
-```
-
-## Deployment
-
-### Frontend
-```bash
-cd frontend
-npm run build
-# Output is in dist/ directory - can be served with any static file server
-```
-
-### Backend
-```bash
-# Using Docker
-docker build -t taskflow-api .
-docker run -p 8000:8000 taskflow-api
-
-# Or using Gunicorn
-gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker
-```
-
-## Contributing
-
-1. Read the setup guide for your development environment
-2. Follow the code style guidelines
-3. Write tests for new features
-4. Update documentation as needed
-
-## License
-
-MIT License - See LICENSE file for details
-
-## Support
-
-For issues, questions, or suggestions, please open an issue on GitHub.
-
-## Roadmap
-
-- [ ] User authentication and authorization
-- [ ] Project templates
-- [ ] Team collaboration features
-- [ ] Advanced filtering and search
-- [ ] Integration with external tools
-- [ ] Mobile app
-- [ ] Real-time collaboration with WebSockets
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
+[![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18.0-green)]()
+[![Python](https://img.shields.io/badge/python-%3E%3D3.9-blue)]()
 
 ---
 
-**Last Updated:** 2024
+## ✨ Features
+
+- **📋 Kanban Board**: Visual task management with drag-and-drop support
+- **👥 Team Collaboration**: Share projects and assign tasks to team members
+- **⚡ Real-time Updates**: Instant synchronization across all clients
+- **🔐 Secure Authentication**: JWT-based auth with role-based access control
+- **🎨 Modern UI**: Clean, responsive design built with React and Tailwind CSS
+- **📊 Task Management**: Create, organize, and track tasks with priorities and labels
+- **🔄 RESTful API**: Comprehensive API with Swagger documentation
+- **🗄️ PostgreSQL Database**: Robust, scalable data persistence
+- **🐳 Docker Support**: Easy deployment with Docker Compose
+
+---
+
+## 🏗️ Architecture Overview
+
+TaskFlow follows a **modern full-stack architecture** with clear separation of concerns:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Frontend (React)                     │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │ Pages → Components → Hooks → Store → Services   │   │
+│  └──────────────────────────────────────────────────┘   │
+└──────────────────────┬──────────────────────────────────┘
+                       │ REST API (JSON)
+┌──────────────────────▼──────────────────────────────────┐
+│                  Backend (FastAPI)                      │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │ Routes → Services → Models → Database           │   │
+│  └──────────────────────────────────────────────────┘   │
+└──────────────────────┬──────────────────────────────────┘
+                       │ ORM (SQLAlchemy)
+┌──────────────────────▼──────────────────────────────────┐
+│                  PostgreSQL Database                    │
+│  (Users, Projects, Tasks, Boards, Members)             │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Tech Stack
+
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| **Frontend** | React + TypeScript | 18.3.1 |
+| | Vite (Build Tool) | 5.4.2 |
+| | Tailwind CSS | 3.4.3 |
+| | React Query | 5.50.1 |
+| | Zustand | 4.5.2 |
+| **Backend** | FastAPI | 0.115.0 |
+| | Python | 3.11+ |
+| | SQLAlchemy ORM | 2.0+ |
+| | Pydantic | 2.0+ |
+| | Alembic Migrations | 1.13+ |
+| **Database** | PostgreSQL | 12+ |
+| **Infrastructure** | Docker | Latest |
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- **Node.js** 18.0+ and **npm** 9.0+
+- **Python** 3.11+ and **pip**
+- **PostgreSQL** 12+ (or use SQLite for development)
+- **Git**
+
+### Option 1: Development Setup (Local)
+
+#### Frontend
+```bash
+cd frontend
+npm install
+cp .env.example .env.local
+npm run dev
+# Opens at http://localhost:5173
+```
+
+#### Backend
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # or `venv\Scripts\activate` on Windows
+pip install -r requirements.txt
+cp .env.example .env
+uvicorn app.main:app --reload --port 8000
+# Opens at http://localhost:8000
+```
+
+### Option 2: Docker Compose (One Command)
+
+```bash
+docker-compose up --build
+```
+
+This starts:
+- **Frontend**: http://localhost:3000 (or 5173)
+- **Backend**: http://localhost:8000
+- **PostgreSQL**: localhost:5432
+- **API Docs**: http://localhost:8000/docs
+
+---
+
+## 📚 Documentation
+
+### Core Documentation
+- **[Architecture Guide](./docs/ARCHITECTURE.md)** - System design, data models, design patterns
+- **[API Reference](./docs/API.md)** - Complete REST API endpoints and examples
+- **[Setup Guide](./docs/SETUP.md)** - Detailed installation and configuration
+- **[Development Guide](./docs/development.md)** - Contributing code and best practices
+- **[Deployment Guide](./docs/deployment.md)** - Production deployment steps
+- **[Contributing Guide](./CONTRIBUTING.md)** - Contribution guidelines and code standards
+
+### Module-Specific Documentation
+- **[Frontend README](./frontend/README.md)** - React setup, component development, styling
+- **[Backend README](./backend/README.md)** - FastAPI setup, API development, testing
+
+---
+
+## 📋 Project Structure
+
+```
+taskflow/
+├── frontend/                    # React TypeScript application
+│   ├── src/
+│   │   ├── components/          # Reusable UI components
+│   │   ├── pages/               # Page components (routing)
+│   │   ├── hooks/               # Custom React hooks
+│   │   ├── store/               # Zustand state management
+│   │   ├── services/            # API client services
+│   │   ├── types/               # TypeScript type definitions
+│   │   ├── utils/               # Utility functions
+│   │   ├── App.tsx              # Root component
+│   │   └── main.tsx             # Entry point
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── tailwind.config.js
+│   └── tsconfig.json
+│
+├── backend/                     # FastAPI application
+│   ├── app/
+│   │   ├── api/                 # API endpoints
+│   │   ├── core/                # Config, security, constants
+│   │   ├── models/              # SQLAlchemy models
+│   │   ├── schemas/             # Pydantic schemas
+│   │   ├── services/            # Business logic
+│   │   ├── db/                  # Database utilities
+│   │   └── main.py              # FastAPI app
+│   ├── tests/                   # Test suite
+│   ├── migrations/              # Alembic migrations
+│   ├── requirements.txt
+│   ├── pyproject.toml
+│   └── pytest.ini
+│
+├── docs/                        # Documentation
+│   ├── ARCHITECTURE.md
+│   ├── API.md
+│   ├── SETUP.md
+│   ├── development.md
+│   └── deployment.md
+│
+├── docker-compose.yml           # Multi-container setup
+├── Dockerfile                   # Backend container
+├── frontend.Dockerfile          # Frontend container
+└── README.md                    # This file
+```
+
+---
+
+## 🔌 API Endpoints
+
+### Authentication
+```
+POST   /api/v1/auth/register    Create new user account
+POST   /api/v1/auth/login       Login and get access token
+POST   /api/v1/auth/refresh     Refresh access token
+GET    /api/v1/auth/logout      Logout
+```
+
+### Projects
+```
+GET    /api/v1/projects         List all user projects
+POST   /api/v1/projects         Create new project
+GET    /api/v1/projects/{id}    Get project details
+PUT    /api/v1/projects/{id}    Update project
+DELETE /api/v1/projects/{id}    Delete project
+```
+
+### Tasks
+```
+GET    /api/v1/projects/{pid}/tasks        List project tasks
+POST   /api/v1/projects/{pid}/tasks        Create new task
+GET    /api/v1/tasks/{id}                  Get task details
+PUT    /api/v1/tasks/{id}                  Update task
+PATCH  /api/v1/tasks/{id}/status           Update task status
+DELETE /api/v1/tasks/{id}                  Delete task
+```
+
+### Users
+```
+GET    /api/v1/users/me         Get current user
+PUT    /api/v1/users/me         Update user profile
+GET    /api/v1/users/{id}       Get user by ID
+```
+
+📖 **Full API documentation available at** `http://localhost:8000/docs` (Swagger UI)
+
+---
+
+## 🛠️ Development
+
+### Running Tests
+
+**Frontend:**
+```bash
+cd frontend
+npm test                # Run all tests
+npm run type-check      # TypeScript type checking
+npm run lint            # ESLint
+```
+
+**Backend:**
+```bash
+cd backend
+pytest                  # Run all tests
+pytest --cov=app        # With coverage report
+pytest -v               # Verbose output
+```
+
+### Code Quality
+
+**Frontend:**
+```bash
+npm run lint            # ESLint
+npm run format          # Prettier (format code)
+npm run type-check      # TypeScript check
+```
+
+**Backend:**
+```bash
+black .                 # Format with Black
+flake8 .                # Lint with Flake8
+mypy app --ignore-missing-imports  # Type checking
+bandit -r app           # Security checks
+```
+
+### Database Migrations
+
+```bash
+cd backend
+
+# Create new migration
+alembic revision --autogenerate -m "Add new feature"
+
+# Apply pending migrations
+alembic upgrade head
+
+# Revert one migration
+alembic downgrade -1
+
+# View migration history
+alembic history
+```
+
+---
+
+## 🐳 Docker Deployment
+
+### Build Images
+```bash
+# Build all containers
+docker-compose build
+
+# Build specific service
+docker-compose build backend
+docker-compose build frontend
+```
+
+### Run Containers
+```bash
+# Start all services
+docker-compose up
+
+# Start in background
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+---
+
+## 🔐 Security
+
+TaskFlow implements industry-standard security practices:
+
+- **🔑 JWT Authentication** - Stateless token-based auth with expiration
+- **🛡️ Password Hashing** - Bcrypt with salt for password security
+- **🚫 CORS Protection** - Configurable cross-origin resource sharing
+- **✅ Input Validation** - Pydantic validation on all API inputs
+- **🔒 SQL Injection Prevention** - SQLAlchemy ORM prevents SQL attacks
+- **📝 Environment Variables** - Secrets managed via environment, never in code
+- **🔐 HTTPS Ready** - SSL/TLS support for production
+
+---
+
+## 📊 Database Schema
+
+### Users Table
+```sql
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    full_name VARCHAR(255),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### Projects Table
+```sql
+CREATE TABLE projects (
+    id SERIAL PRIMARY KEY,
+    owner_id INTEGER NOT NULL REFERENCES users(id),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### Tasks Table
+```sql
+CREATE TABLE tasks (
+    id SERIAL PRIMARY KEY,
+    project_id INTEGER NOT NULL REFERENCES projects(id),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    status VARCHAR(50) DEFAULT 'todo',
+    priority VARCHAR(50) DEFAULT 'medium',
+    assignee_id INTEGER REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+📖 See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for complete schema documentation.
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions from the community! Please read our [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on:
+
+- 🔀 Branching strategy
+- 📝 Commit conventions
+- ✅ Code quality standards
+- 🧪 Testing requirements
+- 🎯 Pull request process
+
+### Quick Contribution Steps
+
+1. **Fork** the repository
+2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
+3. **Commit** changes: `git commit -m '[feat] Add amazing feature'`
+4. **Push** to branch: `git push origin feature/amazing-feature`
+5. **Open** a Pull Request
+
+---
+
+## 📝 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](./LICENSE) file for details.
+
+MIT License includes:
+- ✅ Commercial use
+- ✅ Modification
+- ✅ Distribution
+- ✅ Private use
+- ⚠️ License and copyright notice required
+
+---
+
+## 🗺️ Roadmap
+
+### Phase 1: Core (✅ Complete)
+- ✅ User authentication and authorization
+- ✅ Project creation and management
+- ✅ Kanban board with drag-and-drop
+- ✅ Task creation and assignment
+- ✅ REST API with Swagger documentation
+
+### Phase 2: Enhancement (🔄 In Progress)
+- 🔄 Real-time collaboration (WebSockets)
+- 🔄 Task templates and automation
+- 🔄 Advanced filtering and search
+- 🔄 Activity logs and audit trails
+
+### Phase 3: Advanced (📋 Planned)
+- 📋 Team collaboration features
+- 📋 Integration with external services (GitHub, Slack)
+- 📋 Mobile app (React Native)
+- 📋 Analytics and reporting
+- 📋 Custom workflows and automation
+
+---
+
+## 🆘 Support & Troubleshooting
+
+### Common Issues
+
+**Port already in use:**
+```bash
+# Frontend on different port
+cd frontend && npm run dev -- --port 5174
+
+# Backend on different port
+cd backend && uvicorn app.main:app --reload --port 8001
+```
+
+**Database connection error:**
+```bash
+# Check PostgreSQL is running
+psql -U postgres  # Should connect
+
+# Verify DATABASE_URL in .env
+echo $DATABASE_URL  # Should show valid connection string
+```
+
+**Dependencies installation fails:**
+```bash
+# Clear and reinstall
+rm -rf node_modules package-lock.json
+npm install
+
+# Or for backend
+rm -rf venv
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### Resources
+- 📖 [Full Documentation](./docs/)
+- 🐛 [Issues & Bugs](https://github.com/ca136/taskflow/issues)
+- 💬 [Discussions](https://github.com/ca136/taskflow/discussions)
+
+---
+
+## 👥 Team
+
+TaskFlow is maintained by the development team. See [CONTRIBUTING.md](./CONTRIBUTING.md) for ways to get involved.
+
+---
+
+## 📞 Contact
+
+- 📧 Email: support@taskflow.dev
+- 💬 GitHub Issues: [Report a bug](https://github.com/ca136/taskflow/issues)
+- 🌐 Website: https://taskflow.dev
+
+---
+
+## 🎉 Acknowledgments
+
+TaskFlow is built on excellent open-source projects:
+- [React](https://react.dev)
+- [FastAPI](https://fastapi.tiangolo.com)
+- [SQLAlchemy](https://www.sqlalchemy.org)
+- [Tailwind CSS](https://tailwindcss.com)
+- [PostgreSQL](https://www.postgresql.org)
+
+---
+
+**Made with ❤️ for efficient project management**
+
