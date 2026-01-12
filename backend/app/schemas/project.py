@@ -3,6 +3,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 
 class ProjectBase(BaseModel):
@@ -24,10 +25,10 @@ class ProjectUpdate(BaseModel):
 
 class ProjectResponse(ProjectBase):
     """Project response schema"""
-    id: int
-    owner_id: int
+    id: UUID
+    created_by: UUID
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True

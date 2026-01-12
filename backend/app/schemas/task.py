@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 from enum import Enum as PyEnum
+from uuid import UUID
 
 
 class TaskStatus(str, PyEnum):
@@ -13,34 +14,45 @@ class TaskStatus(str, PyEnum):
     DONE = "done"
 
 
+class TaskPriority(str, PyEnum):
+    """Task priority enumeration"""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+
 class TaskBase(BaseModel):
     """Base task schema"""
     title: str
     description: Optional[str] = None
+    priority: TaskPriority = TaskPriority.MEDIUM
     status: TaskStatus = TaskStatus.TODO
-    assigned_to: Optional[int] = None
-    due_date: Optional[datetime] = None
 
 
 class TaskCreate(TaskBase):
     """Task creation schema"""
-    pass
+    board_id: UUID
 
 
 class TaskUpdate(BaseModel):
     """Task update schema"""
     title: Optional[str] = None
     description: Optional[str] = None
+    priority: Optional[TaskPriority] = None
     status: Optional[TaskStatus] = None
-    assigned_to: Optional[int] = None
-    due_date: Optional[datetime] = None
+    assignee: Optional[UUID] = None
+
+
+class TaskStatusUpdate(BaseModel):
+    """Task status update schema"""
+    status: TaskStatus
 
 
 class TaskResponse(TaskBase):
     """Task response schema"""
-    id: int
-    project_id: int
-    created_by: int
+    id: UUID
+    board_id: UUID
+    assignee: Optional[UUID] = None
     created_at: datetime
     updated_at: datetime
     

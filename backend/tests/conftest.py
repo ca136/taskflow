@@ -7,6 +7,8 @@ from fastapi.testclient import TestClient
 from app.database import Base, get_db
 from app.main import app
 from app.core.config import Settings
+from app.core.security import create_access_token, get_password_hash
+from app.models.user import User
 
 
 # Create test database
@@ -58,6 +60,28 @@ def client(db_session):
         yield test_client
     
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def test_user(db_session):
+    """Create a test user"""
+    user = User(
+        username="testuser",
+        email="test@example.com",
+        hashed_password=get_password_hash("pwd123"),  # Keep under 72 bytes
+        is_active=True
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+    return user
+
+
+@pytest.fixture
+def auth_headers(test_user):
+    """Get authorization headers with valid token"""
+    token = create_access_token(data={"sub": test_user.username})
+    return {"Authorization": f"Bearer {token}"}
 
 
 def pytest_configure(config):

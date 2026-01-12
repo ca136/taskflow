@@ -2,10 +2,10 @@
 
 from datetime import datetime
 from sqlalchemy import Column, String, DateTime, ForeignKey, Integer
-from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
 from app.db.base import Base
+from app.db.types import GUID
 
 
 class Board(Base):
@@ -13,8 +13,8 @@ class Board(Base):
 
     __tablename__ = "boards"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"), nullable=False, index=True)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    project_id = Column(GUID(), ForeignKey("projects.id"), nullable=False, index=True)
     name = Column(String, nullable=False)
     order = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -6,8 +6,18 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 from app.core.config import get_settings
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing - use argon2 instead of bcrypt for better compatibility
+try:
+    pwd_context = CryptContext(
+        schemes=["argon2"],
+        deprecated="auto"
+    )
+except Exception:
+    # Fallback to pbkdf2 if argon2 is not available
+    pwd_context = CryptContext(
+        schemes=["pbkdf2_sha256"],
+        deprecated="auto"
+    )
 
 settings = get_settings()
 

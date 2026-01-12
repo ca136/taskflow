@@ -1,6 +1,6 @@
 """Application configuration."""
 
-from typing import List
+from typing import List, Union
 from functools import lru_cache
 from pydantic_settings import BaseSettings
 from pydantic import field_validator
@@ -46,11 +46,13 @@ class Settings(BaseSettings):
 
     @field_validator('ALLOWED_ORIGINS', mode='before')
     @classmethod
-    def parse_allowed_origins(cls, v):
+    def parse_allowed_origins(cls, v: Union[str, List[str]]) -> List[str]:
         """Parse comma-separated ALLOWED_ORIGINS string into list."""
         if isinstance(v, str):
-            return [origin.strip() for origin in v.split(',')]
-        return v
+            return [origin.strip() for origin in v.split(',') if origin.strip()]
+        if isinstance(v, list):
+            return v
+        return ["http://localhost:5173", "http://localhost:3000"]
 
     class Config:
         """Pydantic config."""
