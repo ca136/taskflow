@@ -34,7 +34,7 @@ export interface Task {
   description?: string
   assignee?: string
   priority: 'low' | 'medium' | 'high'
-  status: 'todo' | 'in-progress' | 'done'
+  column: 'todo' | 'in-progress' | 'done'
   createdAt: string
   updatedAt: string
 }
