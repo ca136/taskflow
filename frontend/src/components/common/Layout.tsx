@@ -1,12 +1,15 @@
 import { Outlet, useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
 
 export default function Layout() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const handleLogout = () => {
     logout()
+    queryClient.clear()
     navigate('/login')
   }
 

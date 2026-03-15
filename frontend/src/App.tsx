@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useAuthStore } from '@/stores/auth'
 import ProtectedRoute from '@/components/common/ProtectedRoute'
+import GuestRoute from '@/components/common/GuestRoute'
 import Layout from '@/components/common/Layout'
 import LoginPage from '@/pages/LoginPage'
 import RegisterPage from '@/pages/RegisterPage'
@@ -26,8 +27,10 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
+      <Route element={<GuestRoute />}>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+      </Route>
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
           <Route path="/projects" element={<ProjectsPage />} />
