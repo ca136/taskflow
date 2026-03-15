@@ -1,38 +1,33 @@
-"""Application configuration."""
+"""Application configuration — all values from environment variables."""
 
+from functools import lru_cache
 from typing import List
 
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    """Application settings."""
-
     # Database
-    DATABASE_URL: str = "postgresql://taskflow:taskflow_password@localhost:5432/taskflow"
+    DATABASE_URL: str = "postgresql://localhost:5432/taskflow"
 
-    # Security
-    SECRET_KEY: str = "your-secret-key-here-change-in-production"
-    JWT_ALGORITHM: str = "HS256"
-    JWT_EXPIRATION_HOURS: int = 24
+    # Security — no defaults for secrets; they MUST be set in env
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # Development
-    DEBUG: bool = True
-    LOG_LEVEL: str = "INFO"
+    # Application
+    APP_NAME: str = "TaskFlow"
+    APP_VERSION: str = "0.1.0"
+    API_V1_PREFIX: str = "/api/v1"
+    DEBUG: bool = False
 
     # CORS
-    CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000"]
+    ALLOWED_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000"]
 
-    # Server
-    SERVER_HOST: str = "0.0.0.0"
-    SERVER_PORT: int = 8000
-
-    class Config:
-        """Pydantic config."""
-
-        env_file = ".env"
-        case_sensitive = True
+    model_config = {"env_file": ".env", "case_sensitive": True}
 
 
-# Create settings instance
-settings = Settings()
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()

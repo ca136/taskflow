@@ -1,24 +1,54 @@
 """Task model."""
 
-from datetime import datetime
-from sqlalchemy import Column, String, DateTime, ForeignKey, Text
-from sqlalchemy.dialects.postgresql import UUID
+import enum
 import uuid
+from datetime import datetime, timezone
+
+from sqlalchemy import DateTime, Enum, ForeignKey, String, Text, Uuid
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
 
-class Task(Base):
-    """Task database model."""
+class TaskPriority(str, enum.Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
 
+
+class TaskStatus(str, enum.Enum):
+    TODO = "todo"
+    IN_PROGRESS = "in_progress"
+    DONE = "done"
+
+
+class Task(Base):
     __tablename__ = "tasks"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    board_id = Column(UUID(as_uuid=True), ForeignKey("boards.id"), nullable=False, index=True)
-    title = Column(String, nullable=False)
-    description = Column(Text)
-    assignee = Column(UUID(as_uuid=True), ForeignKey("users.id"))
-    priority = Column(String, default="medium")  # low, medium, high
-    status = Column(String, default="todo")  # todo, in-progress, done
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    board_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("boards.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    title: Mapped[str] = mapped_column(String(300), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    assignee_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="SET NULL")
+    )
+    priority: Mapped[TaskPriority] = mapped_column(
+        Enum(TaskPriority), default=TaskPriority.MEDIUM
+    )
+    status: Mapped[TaskStatus] = mapped_column(
+        Enum(TaskStatus), default=TaskStatus.TODO
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    # Relationships
+    board: Mapped["Board"] = relationship(back_populates="tasks")
+    assignee: Mapped["User | None"] = relationship()

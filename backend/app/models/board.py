@@ -1,20 +1,27 @@
 """Board model."""
 
-from datetime import datetime
-from sqlalchemy import Column, String, DateTime, ForeignKey, Integer
-from sqlalchemy.dialects.postgresql import UUID
 import uuid
+from datetime import datetime, timezone
+
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Uuid
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
 
 class Board(Base):
-    """Board database model."""
-
     __tablename__ = "boards"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"), nullable=False, index=True)
-    name = Column(String, nullable=False)
-    order = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+    # Relationships
+    project: Mapped["Project"] = relationship(back_populates="boards")
+    tasks: Mapped[list["Task"]] = relationship(back_populates="board", cascade="all, delete-orphan")

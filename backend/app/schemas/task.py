@@ -1,48 +1,39 @@
-"""Task schemas for request/response validation"""
+"""Task schemas."""
 
-from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
-from enum import Enum as PyEnum
+from uuid import UUID
+
+from pydantic import BaseModel, Field
+
+from app.models.task import TaskPriority, TaskStatus
 
 
-class TaskStatus(str, PyEnum):
-    """Task status enumeration"""
-    TODO = "todo"
-    IN_PROGRESS = "in_progress"
-    DONE = "done"
-
-
-class TaskBase(BaseModel):
-    """Base task schema"""
-    title: str
+class TaskCreate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=300)
     description: Optional[str] = None
+    assignee_id: Optional[UUID] = None
+    priority: TaskPriority = TaskPriority.MEDIUM
     status: TaskStatus = TaskStatus.TODO
-    assigned_to: Optional[int] = None
-    due_date: Optional[datetime] = None
-
-
-class TaskCreate(TaskBase):
-    """Task creation schema"""
-    pass
 
 
 class TaskUpdate(BaseModel):
-    """Task update schema"""
-    title: Optional[str] = None
+    title: Optional[str] = Field(None, min_length=1, max_length=300)
     description: Optional[str] = None
+    assignee_id: Optional[UUID] = None
+    priority: Optional[TaskPriority] = None
     status: Optional[TaskStatus] = None
-    assigned_to: Optional[int] = None
-    due_date: Optional[datetime] = None
 
 
-class TaskResponse(TaskBase):
-    """Task response schema"""
-    id: int
-    project_id: int
-    created_by: int
+class TaskResponse(BaseModel):
+    id: UUID
+    board_id: UUID
+    title: str
+    description: Optional[str]
+    assignee_id: Optional[UUID]
+    priority: TaskPriority
+    status: TaskStatus
     created_at: datetime
     updated_at: datetime
-    
-    class Config:
-        from_attributes = True
+
+    model_config = {"from_attributes": True}
