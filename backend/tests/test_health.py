@@ -1,26 +1,27 @@
-"""Health check tests."""
+"""Health and root endpoint tests."""
 
 import pytest
 from httpx import AsyncClient
 
-from app.main import app
+
+@pytest.mark.asyncio
+async def test_health(client: AsyncClient):
+    resp = await client.get("/api/v1/health")
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "ok"
 
 
 @pytest.mark.asyncio
-async def test_health_check():
-    """Test health check endpoint."""
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        response = await client.get("/health")
-        assert response.status_code == 200
-        assert response.json() == {"status": "ok"}
+async def test_root(client: AsyncClient):
+    resp = await client.get("/")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["name"] == "TaskFlow"
+    assert "version" in data
 
 
 @pytest.mark.asyncio
-async def test_root_endpoint():
-    """Test root endpoint."""
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        response = await client.get("/")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["message"] == "TaskFlow API"
-        assert "version" in data
+async def test_security_headers(client: AsyncClient):
+    resp = await client.get("/")
+    assert resp.headers["X-Content-Type-Options"] == "nosniff"
+    assert resp.headers["X-Frame-Options"] == "DENY"

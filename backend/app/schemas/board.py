@@ -1,4 +1,4 @@
-"""Project schemas."""
+"""Board schemas."""
 
 from datetime import datetime
 from typing import Optional
@@ -7,22 +7,21 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
-class ProjectCreate(BaseModel):
+class BoardCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
-    description: Optional[str] = None
+    position: int = 0
 
 
-class ProjectUpdate(BaseModel):
+class BoardUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=200)
-    description: Optional[str] = None
+    position: Optional[int] = None
 
 
-class ProjectResponse(BaseModel):
+class BoardResponse(BaseModel):
     id: UUID
+    project_id: UUID
     name: str
-    description: Optional[str]
-    owner_id: UUID
+    position: int
     created_at: datetime
-    updated_at: datetime
 
     model_config = {"from_attributes": True}

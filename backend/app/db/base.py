@@ -1,6 +1,7 @@
-"""Database base model."""
+"""Single declarative base for all models."""
 
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 
-# Create declarative base for all models
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
