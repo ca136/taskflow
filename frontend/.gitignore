@@ -30,3 +30,14 @@ dist-ssr
 
 # Build
 coverage
+
+# TypeScript build info
+*.tsbuildinfo
+vite.config.d.ts
+vite.config.js
+
+# tsc -b output in src (declaration files and transpiled JS)
+src/**/*.d.ts
+src/**/*.d.ts.map
+src/**/*.js
+!src/vite-env.d.ts
