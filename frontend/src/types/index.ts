@@ -28,6 +28,53 @@ export interface Board {
   created_at: string
 }
 
+// Label Types
+export interface Label {
+  id: string
+  name: string
+  color: string
+  project_id: string
+}
+
+// Checklist Types
+export interface ChecklistItem {
+  id: string
+  checklist_id: string
+  content: string
+  is_completed: boolean
+  position: number
+}
+
+export interface Checklist {
+  id: string
+  task_id: string
+  title: string
+  position: number
+  items: ChecklistItem[]
+}
+
+// Comment Types
+export interface Comment {
+  id: string
+  task_id: string
+  user_id: string
+  content: string
+  author_name: string
+  created_at: string
+  updated_at: string
+}
+
+// Activity Log Types
+export interface ActivityLog {
+  id: string
+  task_id: string
+  user_id: string | null
+  action: string
+  details: string | null
+  user_name: string | null
+  created_at: string
+}
+
 // Task Types
 export interface Task {
   id: string
@@ -37,6 +84,13 @@ export interface Task {
   assignee_id: string | null
   priority: 'low' | 'medium' | 'high'
   status: 'todo' | 'in_progress' | 'done'
+  position: number
+  due_date: string | null
+  cover_color: string | null
+  is_archived: boolean
+  labels: Label[]
+  checklists: Checklist[]
+  assignee_name: string | null
   created_at: string
   updated_at: string
 }
