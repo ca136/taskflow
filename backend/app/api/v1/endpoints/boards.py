@@ -3,7 +3,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import case, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
@@ -11,13 +11,7 @@ from app.db.session import get_db
 from app.models.board import Board
 from app.models.project import Project
 from app.models.user import User
-from pydantic import BaseModel
-from app.schemas.board import BoardCreate, BoardResponse, BoardUpdate
-
-
-class BoardReorderItem(BaseModel):
-    id: UUID
-    position: int
+from app.schemas.board import BoardCreate, BoardReorderItem, BoardResponse, BoardUpdate
 
 router = APIRouter()
 
@@ -109,13 +103,13 @@ async def reorder_boards(
     db: AsyncSession = Depends(get_db),
 ):
     await _verify_project_access(project_id, current_user, db)
+    if not items:
+        return
 
-    for item in items:
-        result = await db.execute(
-            select(Board).where(Board.id == item.id, Board.project_id == project_id)
-        )
-        board = result.scalar_one_or_none()
-        if board is not None:
-            board.position = item.position
-
+    id_to_pos = {item.id: item.position for item in items}
+    await db.execute(
+        update(Board)
+        .where(Board.id.in_(id_to_pos.keys()), Board.project_id == project_id)
+        .values(position=case(id_to_pos, value=Board.id))
+    )
     await db.commit()

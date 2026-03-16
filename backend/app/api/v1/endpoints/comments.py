@@ -7,34 +7,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, verify_task_access
 from app.db.session import get_db
-from app.models.board import Board
 from app.models.comment import Comment
-from app.models.project import Project
-from app.models.task import Task
 from app.models.user import User
 from app.schemas.comment import CommentCreate, CommentResponse, CommentUpdate
 
 router = APIRouter()
-
-
-async def _verify_task_access(task_id: UUID, user: User, db: AsyncSession) -> Task:
-    result = await db.execute(select(Task).where(Task.id == task_id))
-    task = result.scalar_one_or_none()
-    if task is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
-
-    result = await db.execute(select(Board).where(Board.id == task.board_id))
-    board = result.scalar_one_or_none()
-    if board is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board not found")
-
-    result = await db.execute(select(Project).where(Project.id == board.project_id))
-    project = result.scalar_one_or_none()
-    if project is None or project.owner_id != user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
-    return task
 
 
 def _comment_to_response(comment: Comment) -> dict:
@@ -60,12 +39,11 @@ async def create_comment(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    await _verify_task_access(task_id, current_user, db)
+    await verify_task_access(task_id, current_user, db)
     comment = Comment(task_id=task_id, user_id=current_user.id, content=body.content)
     db.add(comment)
     await db.commit()
-    await db.refresh(comment)
-    # Reload with user relationship
+    # Load with user relationship in one query
     result = await db.execute(
         select(Comment).where(Comment.id == comment.id).options(selectinload(Comment.user))
     )
@@ -79,7 +57,7 @@ async def list_comments(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    await _verify_task_access(task_id, current_user, db)
+    await verify_task_access(task_id, current_user, db)
     result = await db.execute(
         select(Comment)
         .where(Comment.task_id == task_id)
@@ -97,7 +75,7 @@ async def update_comment(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    await _verify_task_access(task_id, current_user, db)
+    await verify_task_access(task_id, current_user, db)
     result = await db.execute(
         select(Comment)
         .where(Comment.id == comment_id, Comment.task_id == task_id)
@@ -126,7 +104,7 @@ async def delete_comment(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    await _verify_task_access(task_id, current_user, db)
+    await verify_task_access(task_id, current_user, db)
     result = await db.execute(
         select(Comment).where(Comment.id == comment_id, Comment.task_id == task_id)
     )

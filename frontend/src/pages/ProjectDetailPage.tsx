@@ -25,7 +25,15 @@ export default function ProjectDetailPage() {
   const [showBoardForm, setShowBoardForm] = useState(false)
   const [boardName, setBoardName] = useState('')
   const [activeTask, setActiveTask] = useState<{ task: Task; boardId: string } | null>(null)
-  const filters = useFilterStore()
+  const searchText = useFilterStore((s) => s.searchText)
+  const priorities = useFilterStore((s) => s.priorities)
+  const labelIds = useFilterStore((s) => s.labelIds)
+  const dueDateFilter = useFilterStore((s) => s.dueDateFilter)
+  const assigneeId = useFilterStore((s) => s.assigneeId)
+  const filters = useMemo(
+    () => ({ searchText, priorities, labelIds, dueDateFilter, assigneeId }),
+    [searchText, priorities, labelIds, dueDateFilter, assigneeId]
+  )
   const [moveError, setMoveError] = useState<string | null>(null)
   const boardNameInputRef = useRef<HTMLInputElement>(null)
 
@@ -205,13 +213,12 @@ export default function ProjectDetailPage() {
 
     setActiveTask(null)
 
-    // Refresh all board task caches
-    if (boards) {
-      for (const b of boards) {
-        queryClient.invalidateQueries({ queryKey: ['boards', b.id, 'tasks'] })
-      }
+    // Refresh only affected board caches
+    const affectedBoards = new Set([currentBoardId, task.board_id, targetBoardId])
+    for (const bid of affectedBoards) {
+      queryClient.invalidateQueries({ queryKey: ['boards', bid, 'tasks'] })
     }
-  }, [queryClient, boards])
+  }, [queryClient])
 
   const sortedBoards = useMemo(
     () => (boards ? [...boards].sort((a, b) => a.position - b.position) : []),
@@ -303,13 +310,7 @@ export default function ProjectDetailPage() {
                 key={board.id}
                 board={board}
                 projectId={projectId!}
-                filters={{
-                  searchText: filters.searchText,
-                  priorities: filters.priorities,
-                  labelIds: filters.labelIds,
-                  dueDateFilter: filters.dueDateFilter,
-                  assigneeId: filters.assigneeId,
-                }}
+                filters={filters}
               />
             ))}
           </div>

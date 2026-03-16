@@ -112,8 +112,8 @@ export default function TaskDetailModal({ task, boardId, projectId, onClose }: P
     status !== task.status ||
     dueDate !== (task.due_date ? task.due_date.split('T')[0] : '') ||
     coverColor !== (task.cover_color ?? '') ||
-    JSON.stringify(selectedLabelIds.sort()) !==
-      JSON.stringify((task.labels?.map((l) => l.id) ?? []).sort())
+    JSON.stringify([...selectedLabelIds].sort()) !==
+      JSON.stringify([...(task.labels?.map((l) => l.id) ?? [])].sort())
 
   const coverColors = ['#61BD4F', '#F2D600', '#FF9F1A', '#EB5A46', '#C377E0', '#0079BF', '#00C2E0', '#51E898']
 

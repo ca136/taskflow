@@ -3,7 +3,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -228,13 +228,13 @@ async def reorder_tasks(
     db: AsyncSession = Depends(get_db),
 ):
     await _verify_board_access(board_id, current_user, db)
+    if not items:
+        return
 
-    for item in items:
-        result = await db.execute(
-            select(Task).where(Task.id == item.id, Task.board_id == board_id)
-        )
-        task = result.scalar_one_or_none()
-        if task is not None:
-            task.position = item.position
-
+    id_to_pos = {item.id: item.position for item in items}
+    await db.execute(
+        update(Task)
+        .where(Task.id.in_(id_to_pos.keys()), Task.board_id == board_id)
+        .values(position=case(id_to_pos, value=Task.id))
+    )
     await db.commit()

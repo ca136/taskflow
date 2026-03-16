@@ -6,12 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, verify_task_access
 from app.db.session import get_db
-from app.models.board import Board
 from app.models.checklist import Checklist, ChecklistItem
-from app.models.project import Project
-from app.models.task import Task
 from app.models.user import User
 from app.schemas.checklist import (
     ChecklistCreate,
@@ -25,22 +22,16 @@ from app.schemas.checklist import (
 router = APIRouter()
 
 
-async def _verify_task_access(task_id: UUID, user: User, db: AsyncSession) -> Task:
-    result = await db.execute(select(Task).where(Task.id == task_id))
-    task = result.scalar_one_or_none()
-    if task is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
-
-    result = await db.execute(select(Board).where(Board.id == task.board_id))
-    board = result.scalar_one_or_none()
-    if board is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board not found")
-
-    result = await db.execute(select(Project).where(Project.id == board.project_id))
-    project = result.scalar_one_or_none()
-    if project is None or project.owner_id != user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
-    return task
+async def _get_checklist_and_verify(
+    checklist_id: UUID, user: User, db: AsyncSession
+) -> Checklist:
+    """Fetch checklist and verify the user owns the parent task's project."""
+    result = await db.execute(select(Checklist).where(Checklist.id == checklist_id))
+    checklist = result.scalar_one_or_none()
+    if checklist is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Checklist not found")
+    await verify_task_access(checklist.task_id, user, db)
+    return checklist
 
 
 # --- Checklist CRUD ---
@@ -56,7 +47,7 @@ async def create_checklist(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    await _verify_task_access(task_id, current_user, db)
+    await verify_task_access(task_id, current_user, db)
 
     result = await db.execute(
         select(func.coalesce(func.max(Checklist.position), -1)).where(Checklist.task_id == task_id)
@@ -81,7 +72,7 @@ async def update_checklist(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    await _verify_task_access(task_id, current_user, db)
+    await verify_task_access(task_id, current_user, db)
     result = await db.execute(
         select(Checklist).where(Checklist.id == checklist_id, Checklist.task_id == task_id)
     )
@@ -106,7 +97,7 @@ async def delete_checklist(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    await _verify_task_access(task_id, current_user, db)
+    await verify_task_access(task_id, current_user, db)
     result = await db.execute(
         select(Checklist).where(Checklist.id == checklist_id, Checklist.task_id == task_id)
     )
@@ -130,12 +121,7 @@ async def create_checklist_item(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(Checklist).where(Checklist.id == checklist_id))
-    checklist = result.scalar_one_or_none()
-    if checklist is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Checklist not found")
-
-    await _verify_task_access(checklist.task_id, current_user, db)
+    checklist = await _get_checklist_and_verify(checklist_id, current_user, db)
 
     result = await db.execute(
         select(func.coalesce(func.max(ChecklistItem.position), -1)).where(
@@ -145,7 +131,7 @@ async def create_checklist_item(
     position = result.scalar() + 1
 
     item = ChecklistItem(
-        checklist_id=checklist_id, content=body.content, position=position
+        checklist_id=checklist.id, content=body.content, position=position
     )
     db.add(item)
     await db.commit()
@@ -164,12 +150,7 @@ async def update_checklist_item(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(Checklist).where(Checklist.id == checklist_id))
-    checklist = result.scalar_one_or_none()
-    if checklist is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Checklist not found")
-
-    await _verify_task_access(checklist.task_id, current_user, db)
+    await _get_checklist_and_verify(checklist_id, current_user, db)
 
     result = await db.execute(
         select(ChecklistItem).where(
@@ -197,12 +178,7 @@ async def delete_checklist_item(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(Checklist).where(Checklist.id == checklist_id))
-    checklist = result.scalar_one_or_none()
-    if checklist is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Checklist not found")
-
-    await _verify_task_access(checklist.task_id, current_user, db)
+    await _get_checklist_and_verify(checklist_id, current_user, db)
 
     result = await db.execute(
         select(ChecklistItem).where(
