@@ -1,6 +1,7 @@
-import { useState, FormEvent } from 'react'
+import { useState, useMemo, FormEvent } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDroppable } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { getTasks } from '@/services/tasks'
 import { updateBoard, deleteBoard } from '@/services/boards'
 import TaskCard from '@/components/tasks/TaskCard'
@@ -10,15 +11,22 @@ import type { Board } from '@/types'
 interface Props {
   board: Board
   projectId: string
+  filters?: {
+    searchText?: string
+    priorities?: string[]
+    labelIds?: string[]
+    dueDateFilter?: string
+    assigneeId?: string | null
+  }
 }
 
-export default function BoardColumn({ board, projectId }: Props) {
+export default function BoardColumn({ board, projectId, filters }: Props) {
   const queryClient = useQueryClient()
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState(board.name)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  const { setNodeRef, isOver } = useDroppable({ id: board.id })
+  const { setNodeRef } = useDroppable({ id: board.id, data: { type: 'board' } })
 
   const { data: tasks, isLoading } = useQuery({
     queryKey: ['boards', board.id, 'tasks'],
@@ -50,12 +58,51 @@ export default function BoardColumn({ board, projectId }: Props) {
     }
   }
 
+  const sortedTasks = useMemo(() => {
+    if (!tasks) return []
+    let filtered = [...tasks].filter((t) => !t.is_archived)
+
+    // Apply filters
+    if (filters?.searchText) {
+      const q = filters.searchText.toLowerCase()
+      filtered = filtered.filter(
+        (t) =>
+          t.title.toLowerCase().includes(q) ||
+          (t.description && t.description.toLowerCase().includes(q))
+      )
+    }
+    if (filters?.priorities && filters.priorities.length > 0) {
+      filtered = filtered.filter((t) => filters.priorities!.includes(t.priority))
+    }
+    if (filters?.labelIds && filters.labelIds.length > 0) {
+      filtered = filtered.filter((t) =>
+        t.labels?.some((l) => filters.labelIds!.includes(l.id))
+      )
+    }
+    if (filters?.dueDateFilter === 'overdue') {
+      filtered = filtered.filter((t) => t.due_date && new Date(t.due_date) < new Date())
+    } else if (filters?.dueDateFilter === 'due_this_week') {
+      const now = new Date()
+      const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+      filtered = filtered.filter(
+        (t) => t.due_date && new Date(t.due_date) >= now && new Date(t.due_date) <= weekFromNow
+      )
+    } else if (filters?.dueDateFilter === 'no_date') {
+      filtered = filtered.filter((t) => !t.due_date)
+    }
+    if (filters?.assigneeId) {
+      filtered = filtered.filter((t) => t.assignee_id === filters.assigneeId)
+    }
+
+    return filtered.sort((a, b) => a.position - b.position)
+  }, [tasks, filters])
+
+  const taskIds = useMemo(() => sortedTasks.map((t) => t.id), [sortedTasks])
+
   return (
     <div
       ref={setNodeRef}
-      className={`w-80 shrink-0 rounded-lg p-3 flex flex-col max-h-[calc(100vh-12rem)] ${
-        isOver ? 'bg-primary-50 ring-2 ring-primary-300' : 'bg-gray-100'
-      }`}
+      className={`w-80 shrink-0 rounded-lg p-3 flex flex-col max-h-[calc(100vh-12rem)] bg-gray-100`}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
@@ -78,9 +125,9 @@ export default function BoardColumn({ board, projectId }: Props) {
             title="Double-click to rename"
           >
             {board.name}
-            {tasks ? (
+            {sortedTasks.length > 0 ? (
               <span className="ml-2 text-xs font-normal text-secondary-500">
-                {tasks.length}
+                {sortedTasks.length}
               </span>
             ) : null}
           </h3>
@@ -125,12 +172,16 @@ export default function BoardColumn({ board, projectId }: Props) {
       <div className="flex-1 overflow-y-auto space-y-2 min-h-[2rem]">
         {isLoading ? (
           <p className="text-xs text-secondary-500">Loading...</p>
-        ) : tasks && tasks.length > 0 ? (
-          tasks.map((task) => (
-            <TaskCard key={task.id} task={task} boardId={board.id} />
-          ))
         ) : (
-          <p className="text-xs text-secondary-500 text-center py-2">No tasks</p>
+          <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+            {sortedTasks.length > 0 ? (
+              sortedTasks.map((task) => (
+                <TaskCard key={task.id} task={task} boardId={board.id} projectId={projectId} />
+              ))
+            ) : (
+              <p className="text-xs text-secondary-500 text-center py-2">No tasks</p>
+            )}
+          </SortableContext>
         )}
       </div>
 

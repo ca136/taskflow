@@ -4,7 +4,7 @@ import enum
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Enum, ForeignKey, String, Text, Uuid
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -40,6 +40,10 @@ class Task(Base):
     status: Mapped[TaskStatus] = mapped_column(
         Enum(TaskStatus), default=TaskStatus.TODO
     )
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    cover_color: Mapped[str | None] = mapped_column(String(7))
+    is_archived: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
@@ -52,3 +56,16 @@ class Task(Base):
     # Relationships
     board: Mapped["Board"] = relationship(back_populates="tasks")
     assignee: Mapped["User | None"] = relationship()
+    labels: Mapped[list["Label"]] = relationship(
+        secondary="task_labels", lazy="selectin"
+    )
+    checklists: Mapped[list["Checklist"]] = relationship(
+        back_populates="task", cascade="all, delete-orphan", lazy="selectin",
+        order_by="Checklist.position"
+    )
+    comments: Mapped[list["Comment"]] = relationship(
+        back_populates="task", cascade="all, delete-orphan"
+    )
+    activity_logs: Mapped[list["ActivityLog"]] = relationship(
+        back_populates="task", cascade="all, delete-orphan"
+    )

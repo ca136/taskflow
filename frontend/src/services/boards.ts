@@ -29,3 +29,10 @@ export async function updateBoard(
 export async function deleteBoard(projectId: string, boardId: string): Promise<void> {
   await client.delete(`/projects/${projectId}/boards/${boardId}`)
 }
+
+export async function reorderBoards(
+  projectId: string,
+  items: { id: string; position: number }[]
+): Promise<void> {
+  await client.post(`/projects/${projectId}/boards/reorder`, items)
+}

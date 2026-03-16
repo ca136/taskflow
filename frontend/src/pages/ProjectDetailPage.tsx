@@ -1,12 +1,22 @@
-import { useState, useCallback, useRef, FormEvent } from 'react'
+import { useState, useCallback, useRef, useMemo, FormEvent } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { DndContext, DragOverlay, closestCorners, type DragStartEvent, type DragEndEvent } from '@dnd-kit/core'
+import {
+  DndContext,
+  DragOverlay,
+  pointerWithin,
+  type DragStartEvent,
+  type DragEndEvent,
+  type DragOverEvent,
+} from '@dnd-kit/core'
+import { arrayMove } from '@dnd-kit/sortable'
 import { getProject } from '@/services/projects'
 import { getBoards, createBoard } from '@/services/boards'
-import { createTask, deleteTask } from '@/services/tasks'
+import { updateTask, reorderTasks } from '@/services/tasks'
 import BoardColumn from '@/components/board/BoardColumn'
+import FilterBar from '@/components/board/FilterBar'
 import TaskCard from '@/components/tasks/TaskCard'
+import { useFilterStore } from '@/stores/filters'
 import type { Task } from '@/types'
 
 export default function ProjectDetailPage() {
@@ -15,6 +25,7 @@ export default function ProjectDetailPage() {
   const [showBoardForm, setShowBoardForm] = useState(false)
   const [boardName, setBoardName] = useState('')
   const [activeTask, setActiveTask] = useState<{ task: Task; boardId: string } | null>(null)
+  const filters = useFilterStore()
   const [moveError, setMoveError] = useState<string | null>(null)
   const boardNameInputRef = useRef<HTMLInputElement>(null)
 
@@ -47,60 +58,165 @@ export default function ProjectDetailPage() {
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event
-    const data = active.data.current as { task: Task; boardId: string } | undefined
-    if (data) {
+    const data = active.data.current as { type: string; task: Task; boardId: string } | undefined
+    if (data?.type === 'task') {
       setActiveTask({ task: data.task, boardId: data.boardId })
     }
   }, [])
 
-  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+  const handleDragOver = useCallback((event: DragOverEvent) => {
     const { active, over } = event
-    setActiveTask(null)
-    setMoveError(null)
-
     if (!over) return
 
-    const sourceData = active.data.current as { task: Task; boardId: string } | undefined
-    if (!sourceData) return
+    const activeData = active.data.current as { type: string; task: Task; boardId: string } | undefined
+    if (activeData?.type !== 'task') return
 
-    const targetBoardId = String(over.id)
-    const sourceBoardId = sourceData.boardId
+    const sourceBoardId = activeData.boardId
+
+    // Determine target board: could be dropping on a task (get its boardId) or on a board directly
+    const overData = over.data.current as { type?: string; boardId?: string; task?: Task } | undefined
+    let targetBoardId: string
+
+    if (overData?.type === 'task') {
+      targetBoardId = overData.boardId!
+    } else if (overData?.type === 'board') {
+      targetBoardId = String(over.id)
+    } else {
+      // Dropping on board droppable
+      targetBoardId = String(over.id)
+    }
 
     if (sourceBoardId === targetBoardId) return
 
-    const task = sourceData.task
-
-    // Optimistic update: remove from source, add to target
+    // Optimistic: move task from source to target in cache
+    const task = activeData.task
     const sourceKey = ['boards', sourceBoardId, 'tasks']
     const targetKey = ['boards', targetBoardId, 'tasks']
-    const prevSource = queryClient.getQueryData<Task[]>(sourceKey)
-    const prevTarget = queryClient.getQueryData<Task[]>(targetKey)
 
     queryClient.setQueryData<Task[]>(sourceKey, (old) =>
       old ? old.filter((t) => t.id !== task.id) : []
     )
-    queryClient.setQueryData<Task[]>(targetKey, (old) =>
-      old ? [...old, { ...task, board_id: targetBoardId }] : [{ ...task, board_id: targetBoardId }]
-    )
 
-    try {
-      await createTask(targetBoardId, {
-        title: task.title,
-        description: task.description ?? undefined,
-        priority: task.priority,
-        status: task.status,
-      })
-      await deleteTask(sourceBoardId, task.id)
-    } catch {
-      // Rollback optimistic update
-      queryClient.setQueryData<Task[]>(sourceKey, prevSource)
-      queryClient.setQueryData<Task[]>(targetKey, prevTarget)
-      setMoveError('Failed to move task. Please try again.')
-    } finally {
-      queryClient.invalidateQueries({ queryKey: sourceKey })
-      queryClient.invalidateQueries({ queryKey: targetKey })
-    }
+    queryClient.setQueryData<Task[]>(targetKey, (old) => {
+      if (!old) return [{ ...task, board_id: targetBoardId }]
+      if (old.find((t) => t.id === task.id)) return old
+      return [...old, { ...task, board_id: targetBoardId }]
+    })
+
+    // Update active task's boardId
+    setActiveTask((prev) => prev ? { ...prev, boardId: targetBoardId } : prev)
+    // Update the data on the active drag element
+    active.data.current = { ...activeData, boardId: targetBoardId }
   }, [queryClient])
+
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    const { active, over } = event
+    setMoveError(null)
+
+    const activeData = active.data.current as { type: string; task: Task; boardId: string } | undefined
+    if (!activeData || activeData.type !== 'task') {
+      setActiveTask(null)
+      return
+    }
+
+    const task = activeData.task
+    const currentBoardId = activeData.boardId
+
+    if (!over) {
+      setActiveTask(null)
+      return
+    }
+
+    // Determine the final board and position
+    const overData = over.data.current as { type?: string; boardId?: string; task?: Task } | undefined
+    let targetBoardId: string
+
+    if (overData?.type === 'task') {
+      targetBoardId = overData.boardId!
+    } else {
+      targetBoardId = String(over.id)
+    }
+
+    const targetKey = ['boards', targetBoardId, 'tasks']
+    const currentTasks = queryClient.getQueryData<Task[]>(targetKey) || []
+
+    // Calculate new position
+    if (overData?.type === 'task' && overData.task) {
+      // Dropped on a specific task — insert at its position
+      const overIndex = currentTasks.findIndex((t) => t.id === overData.task!.id)
+      const activeIndex = currentTasks.findIndex((t) => t.id === task.id)
+
+      if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+        const reordered = arrayMove(currentTasks, activeIndex, overIndex)
+        const items = reordered.map((t, i) => ({ ...t, position: i }))
+        queryClient.setQueryData<Task[]>(targetKey, items)
+
+        // Persist
+        try {
+          if (currentBoardId !== task.board_id) {
+            // Cross-board move
+            await updateTask(task.board_id, task.id, {
+              board_id: targetBoardId,
+              position: overIndex,
+            })
+          }
+          await reorderTasks(
+            targetBoardId,
+            items.map((t) => ({ id: t.id, position: t.position }))
+          )
+        } catch {
+          setMoveError('Failed to reorder tasks. Please refresh.')
+        }
+      } else if (currentBoardId !== task.board_id) {
+        // Cross-board move, dropped on a task but might be same index
+        try {
+          await updateTask(task.board_id, task.id, {
+            board_id: targetBoardId,
+            position: overIndex >= 0 ? overIndex : currentTasks.length - 1,
+          })
+        } catch {
+          setMoveError('Failed to move task. Please refresh.')
+        }
+      }
+    } else {
+      // Dropped on empty board area
+      if (currentBoardId !== task.board_id) {
+        try {
+          await updateTask(task.board_id, task.id, {
+            board_id: targetBoardId,
+          })
+        } catch {
+          setMoveError('Failed to move task. Please refresh.')
+        }
+      } else {
+        // Same board, possibly reordered within — re-persist positions
+        const items = currentTasks.map((t, i) => ({ ...t, position: i }))
+        queryClient.setQueryData<Task[]>(targetKey, items)
+        try {
+          await reorderTasks(
+            targetBoardId,
+            items.map((t) => ({ id: t.id, position: t.position }))
+          )
+        } catch {
+          setMoveError('Failed to reorder tasks. Please refresh.')
+        }
+      }
+    }
+
+    setActiveTask(null)
+
+    // Refresh all board task caches
+    if (boards) {
+      for (const b of boards) {
+        queryClient.invalidateQueries({ queryKey: ['boards', b.id, 'tasks'] })
+      }
+    }
+  }, [queryClient, boards])
+
+  const sortedBoards = useMemo(
+    () => (boards ? [...boards].sort((a, b) => a.position - b.position) : []),
+    [boards]
+  )
 
   if (projectLoading || boardsLoading) {
     return <div className="text-secondary-500">Loading...</div>
@@ -109,8 +225,6 @@ export default function ProjectDetailPage() {
   if (!project) {
     return <div className="text-red-600">Project not found.</div>
   }
-
-  const sortedBoards = boards ? [...boards].sort((a, b) => a.position - b.position) : []
 
   return (
     <div className="h-full flex flex-col">
@@ -169,6 +283,8 @@ export default function ProjectDetailPage() {
         </div>
       )}
 
+      {sortedBoards.length > 0 && <FilterBar projectId={projectId!} />}
+
       {sortedBoards.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-secondary-500 text-lg">No boards yet.</p>
@@ -176,18 +292,30 @@ export default function ProjectDetailPage() {
         </div>
       ) : (
         <DndContext
-          collisionDetection={closestCorners}
+          collisionDetection={pointerWithin}
           onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
           <div className="flex gap-4 overflow-x-auto pb-4 items-start flex-1">
             {sortedBoards.map((board) => (
-              <BoardColumn key={board.id} board={board} projectId={projectId!} />
+              <BoardColumn
+                key={board.id}
+                board={board}
+                projectId={projectId!}
+                filters={{
+                  searchText: filters.searchText,
+                  priorities: filters.priorities,
+                  labelIds: filters.labelIds,
+                  dueDateFilter: filters.dueDateFilter,
+                  assigneeId: filters.assigneeId,
+                }}
+              />
             ))}
           </div>
           <DragOverlay>
             {activeTask ? (
-              <TaskCard task={activeTask.task} boardId={activeTask.boardId} isOverlay />
+              <TaskCard task={activeTask.task} boardId={activeTask.boardId} projectId={projectId} isOverlay />
             ) : null}
           </DragOverlay>
         </DndContext>

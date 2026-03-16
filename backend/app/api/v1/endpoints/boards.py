@@ -11,7 +11,13 @@ from app.db.session import get_db
 from app.models.board import Board
 from app.models.project import Project
 from app.models.user import User
+from pydantic import BaseModel
 from app.schemas.board import BoardCreate, BoardResponse, BoardUpdate
+
+
+class BoardReorderItem(BaseModel):
+    id: UUID
+    position: int
 
 router = APIRouter()
 
@@ -92,4 +98,24 @@ async def delete_board(
     if board is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board not found")
     await db.delete(board)
+    await db.commit()
+
+
+@router.post("/reorder", status_code=status.HTTP_204_NO_CONTENT)
+async def reorder_boards(
+    project_id: UUID,
+    items: list[BoardReorderItem],
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    await _verify_project_access(project_id, current_user, db)
+
+    for item in items:
+        result = await db.execute(
+            select(Board).where(Board.id == item.id, Board.project_id == project_id)
+        )
+        board = result.scalar_one_or_none()
+        if board is not None:
+            board.position = item.position
+
     await db.commit()
