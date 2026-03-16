@@ -6,24 +6,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import case, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, verify_project_access
 from app.db.session import get_db
 from app.models.board import Board
-from app.models.project import Project
 from app.models.user import User
 from app.schemas.board import BoardCreate, BoardReorderItem, BoardResponse, BoardUpdate
 
 router = APIRouter()
-
-
-async def _verify_project_access(project_id: UUID, user: User, db: AsyncSession) -> Project:
-    result = await db.execute(select(Project).where(Project.id == project_id))
-    project = result.scalar_one_or_none()
-    if project is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
-    if project.owner_id != user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not your project")
-    return project
 
 
 @router.post("/", response_model=BoardResponse, status_code=status.HTTP_201_CREATED)
@@ -33,7 +22,7 @@ async def create_board(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    await _verify_project_access(project_id, current_user, db)
+    await verify_project_access(project_id, current_user, db)
     board = Board(project_id=project_id, name=body.name, position=body.position)
     db.add(board)
     await db.commit()
@@ -47,7 +36,7 @@ async def list_boards(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    await _verify_project_access(project_id, current_user, db)
+    await verify_project_access(project_id, current_user, db)
     result = await db.execute(
         select(Board).where(Board.project_id == project_id).order_by(Board.position)
     )
@@ -62,7 +51,7 @@ async def update_board(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    await _verify_project_access(project_id, current_user, db)
+    await verify_project_access(project_id, current_user, db)
     result = await db.execute(
         select(Board).where(Board.id == board_id, Board.project_id == project_id)
     )
@@ -84,7 +73,7 @@ async def delete_board(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    await _verify_project_access(project_id, current_user, db)
+    await verify_project_access(project_id, current_user, db)
     result = await db.execute(
         select(Board).where(Board.id == board_id, Board.project_id == project_id)
     )
@@ -102,7 +91,7 @@ async def reorder_boards(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    await _verify_project_access(project_id, current_user, db)
+    await verify_project_access(project_id, current_user, db)
     if not items:
         return
 

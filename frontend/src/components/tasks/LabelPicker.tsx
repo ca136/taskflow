@@ -2,11 +2,7 @@ import { useState, FormEvent } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getLabels, createLabel } from '@/services/labels'
 import type { Label } from '@/types'
-
-const PRESET_COLORS = [
-  '#61BD4F', '#F2D600', '#FF9F1A', '#EB5A46', '#C377E0',
-  '#0079BF', '#00C2E0', '#51E898', '#FF78CB', '#344563',
-]
+import { COLOR_PALETTE } from '@/constants/colors'
 
 interface Props {
   projectId: string
@@ -18,7 +14,7 @@ export default function LabelPicker({ projectId, selectedLabelIds, onToggle }: P
   const queryClient = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
   const [newName, setNewName] = useState('')
-  const [newColor, setNewColor] = useState(PRESET_COLORS[0])
+  const [newColor, setNewColor] = useState(COLOR_PALETTE[0])
 
   const { data: labels } = useQuery({
     queryKey: ['projects', projectId, 'labels'],
@@ -82,7 +78,7 @@ export default function LabelPicker({ projectId, selectedLabelIds, onToggle }: P
             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
           <div className="flex flex-wrap gap-1">
-            {PRESET_COLORS.map((c) => (
+            {COLOR_PALETTE.map((c) => (
               <button
                 key={c}
                 type="button"

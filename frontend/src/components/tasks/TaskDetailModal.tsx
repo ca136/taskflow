@@ -7,6 +7,7 @@ import ChecklistSection from '@/components/tasks/ChecklistSection'
 import CommentsSection from '@/components/tasks/CommentsSection'
 import ActivitySection from '@/components/tasks/ActivitySection'
 import type { Task } from '@/types'
+import { COLOR_PALETTE } from '@/constants/colors'
 
 interface Props {
   task: Task
@@ -115,7 +116,7 @@ export default function TaskDetailModal({ task, boardId, projectId, onClose }: P
     JSON.stringify([...selectedLabelIds].sort()) !==
       JSON.stringify([...(task.labels?.map((l) => l.id) ?? [])].sort())
 
-  const coverColors = ['#61BD4F', '#F2D600', '#FF9F1A', '#EB5A46', '#C377E0', '#0079BF', '#00C2E0', '#51E898']
+  const coverColors = COLOR_PALETTE
 
   return createPortal(
     <div

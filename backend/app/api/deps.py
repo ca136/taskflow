@@ -42,6 +42,17 @@ async def get_current_user(
     return user
 
 
+async def verify_project_access(project_id: UUID, user: User, db: AsyncSession) -> Project:
+    """Verify user owns the project."""
+    result = await db.execute(select(Project).where(Project.id == project_id))
+    project = result.scalar_one_or_none()
+    if project is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+    if project.owner_id != user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not your project")
+    return project
+
+
 async def verify_task_access(task_id: UUID, user: User, db: AsyncSession) -> Task:
     """Verify user owns the project containing this task. Single-query with JOINs."""
     result = await db.execute(
