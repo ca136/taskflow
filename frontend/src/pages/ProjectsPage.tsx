@@ -1,9 +1,11 @@
 import { useState, FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getProjects, createProject, deleteProject } from '@/services/projects'
 import type { Project } from '@/types'
 
 export default function ProjectsPage() {
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
@@ -111,14 +113,15 @@ export default function ProjectsPage() {
           {projects?.map((project: Project) => (
             <div
               key={project.id}
-              className="p-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+              onClick={() => navigate(`/projects/${project.id}`)}
+              className="p-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
             >
               <div className="flex items-start justify-between">
                 <h3 className="font-semibold text-gray-900 truncate flex-1">
                   {project.name}
                 </h3>
                 <button
-                  onClick={() => deleteMutation.mutate(project.id)}
+                  onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(project.id) }}
                   className="ml-2 text-secondary-500 hover:text-red-600 text-sm shrink-0"
                   title="Delete project"
                 >
