@@ -15,6 +15,7 @@ export default function ProjectDetailPage() {
   const [showBoardForm, setShowBoardForm] = useState(false)
   const [boardName, setBoardName] = useState('')
   const [activeTask, setActiveTask] = useState<{ task: Task; boardId: string } | null>(null)
+  const [moveError, setMoveError] = useState<string | null>(null)
   const boardNameInputRef = useRef<HTMLInputElement>(null)
 
   const { data: project, isLoading: projectLoading } = useQuery({
@@ -55,13 +56,14 @@ export default function ProjectDetailPage() {
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event
     setActiveTask(null)
+    setMoveError(null)
 
     if (!over) return
 
     const sourceData = active.data.current as { task: Task; boardId: string } | undefined
     if (!sourceData) return
 
-    const targetBoardId = over.id as string
+    const targetBoardId = String(over.id)
     const sourceBoardId = sourceData.boardId
 
     if (sourceBoardId === targetBoardId) return
@@ -75,9 +77,9 @@ export default function ProjectDetailPage() {
         status: task.status,
       })
       await deleteTask(sourceBoardId, task.id)
-      queryClient.invalidateQueries({ queryKey: ['boards', sourceBoardId, 'tasks'] })
-      queryClient.invalidateQueries({ queryKey: ['boards', targetBoardId, 'tasks'] })
     } catch {
+      setMoveError('Failed to move task. Please try again.')
+    } finally {
       queryClient.invalidateQueries({ queryKey: ['boards', sourceBoardId, 'tasks'] })
       queryClient.invalidateQueries({ queryKey: ['boards', targetBoardId, 'tasks'] })
     }
@@ -137,7 +139,17 @@ export default function ProjectDetailPage() {
           >
             {createBoardMutation.isPending ? 'Creating...' : 'Create'}
           </button>
+          {createBoardMutation.error && (
+            <span className="text-sm text-red-600">Failed to create board.</span>
+          )}
         </form>
+      )}
+
+      {moveError && (
+        <div className="mb-4 px-4 py-2 bg-red-50 border border-red-200 rounded-md flex items-center justify-between">
+          <p className="text-sm text-red-600">{moveError}</p>
+          <button onClick={() => setMoveError(null)} className="text-red-400 hover:text-red-600 text-sm ml-4">&times;</button>
+        </div>
       )}
 
       {sortedBoards.length === 0 ? (

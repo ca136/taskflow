@@ -16,6 +16,7 @@ export default function BoardColumn({ board, projectId }: Props) {
   const queryClient = useQueryClient()
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState(board.name)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const { setNodeRef, isOver } = useDroppable({ id: board.id })
 
@@ -84,14 +85,41 @@ export default function BoardColumn({ board, projectId }: Props) {
             ) : null}
           </h3>
         )}
-        <button
-          onClick={() => deleteMutation.mutate()}
-          className="ml-2 text-secondary-500 hover:text-red-600 text-xs shrink-0"
-          title="Delete board"
-        >
-          &times;
-        </button>
+        {confirmDelete ? (
+          <div className="flex items-center gap-1 ml-2 shrink-0">
+            <button
+              onClick={() => deleteMutation.mutate()}
+              disabled={deleteMutation.isPending}
+              className="text-xs text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
+            >
+              {deleteMutation.isPending ? '...' : 'Yes'}
+            </button>
+            <span className="text-xs text-secondary-500">/</span>
+            <button
+              onClick={() => setConfirmDelete(false)}
+              className="text-xs text-secondary-500 hover:text-gray-900"
+            >
+              No
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="ml-2 text-secondary-500 hover:text-red-600 text-xs shrink-0"
+            title="Delete board"
+          >
+            &times;
+          </button>
+        )}
       </div>
+
+      {/* Errors */}
+      {renameMutation.error && (
+        <p className="text-xs text-red-600 mb-2">Failed to rename board.</p>
+      )}
+      {deleteMutation.error && (
+        <p className="text-xs text-red-600 mb-2">Failed to delete board.</p>
+      )}
 
       {/* Task list */}
       <div className="flex-1 overflow-y-auto space-y-2 min-h-[2rem]">

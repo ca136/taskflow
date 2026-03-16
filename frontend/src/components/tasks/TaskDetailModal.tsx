@@ -1,4 +1,5 @@
-import { useState, FormEvent } from 'react'
+import { useState, useEffect, useRef, FormEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateTask, deleteTask } from '@/services/tasks'
 import type { Task } from '@/types'
@@ -16,6 +17,16 @@ export default function TaskDetailModal({ task, boardId, onClose }: Props) {
   const [priority, setPriority] = useState(task.priority)
   const [status, setStatus] = useState(task.status)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    dialogRef.current?.focus()
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
 
   const updateMutation = useMutation({
     mutationFn: (data: Parameters<typeof updateTask>[2]) =>
@@ -50,17 +61,25 @@ export default function TaskDetailModal({ task, boardId, onClose }: Props) {
     priority !== task.priority ||
     status !== task.status
 
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
+  return createPortal(
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="taskModalTitle"
+    >
       <div
-        className="bg-white rounded-lg p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto"
+        ref={dialogRef}
+        tabIndex={-1}
+        className="bg-white rounded-lg p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <form onSubmit={handleSave}>
           <div className="space-y-4">
             {/* Title */}
             <div>
-              <label htmlFor="taskTitle" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="taskTitle" id="taskModalTitle" className="block text-sm font-medium text-gray-700 mb-1">
                 Title
               </label>
               <input
@@ -189,6 +208,7 @@ export default function TaskDetailModal({ task, boardId, onClose }: Props) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
