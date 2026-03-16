@@ -69,6 +69,20 @@ export default function ProjectDetailPage() {
     if (sourceBoardId === targetBoardId) return
 
     const task = sourceData.task
+
+    // Optimistic update: remove from source, add to target
+    const sourceKey = ['boards', sourceBoardId, 'tasks']
+    const targetKey = ['boards', targetBoardId, 'tasks']
+    const prevSource = queryClient.getQueryData<Task[]>(sourceKey)
+    const prevTarget = queryClient.getQueryData<Task[]>(targetKey)
+
+    queryClient.setQueryData<Task[]>(sourceKey, (old) =>
+      old ? old.filter((t) => t.id !== task.id) : []
+    )
+    queryClient.setQueryData<Task[]>(targetKey, (old) =>
+      old ? [...old, { ...task, board_id: targetBoardId }] : [{ ...task, board_id: targetBoardId }]
+    )
+
     try {
       await createTask(targetBoardId, {
         title: task.title,
@@ -78,10 +92,13 @@ export default function ProjectDetailPage() {
       })
       await deleteTask(sourceBoardId, task.id)
     } catch {
+      // Rollback optimistic update
+      queryClient.setQueryData<Task[]>(sourceKey, prevSource)
+      queryClient.setQueryData<Task[]>(targetKey, prevTarget)
       setMoveError('Failed to move task. Please try again.')
     } finally {
-      queryClient.invalidateQueries({ queryKey: ['boards', sourceBoardId, 'tasks'] })
-      queryClient.invalidateQueries({ queryKey: ['boards', targetBoardId, 'tasks'] })
+      queryClient.invalidateQueries({ queryKey: sourceKey })
+      queryClient.invalidateQueries({ queryKey: targetKey })
     }
   }, [queryClient])
 

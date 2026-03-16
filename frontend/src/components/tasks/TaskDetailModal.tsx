@@ -20,11 +20,38 @@ export default function TaskDetailModal({ task, boardId, onClose }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    dialog.focus()
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+
+      // Focus trap: cycle focus within the modal
+      if (e.key === 'Tab') {
+        const focusable = dialog.querySelectorAll<HTMLElement>(
+          'input, select, textarea, button, [tabindex]:not([tabindex="-1"])'
+        )
+        if (focusable.length === 0) return
+
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
     }
+
     document.addEventListener('keydown', handleKeyDown)
-    dialogRef.current?.focus()
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
 
